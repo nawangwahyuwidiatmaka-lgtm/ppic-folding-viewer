@@ -507,6 +507,11 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
 #qTbl tr.qrow{cursor:pointer}
 #qTbl tr.qrow:hover td{background:var(--hover,rgba(127,127,127,.07))}
 #qTbl tr.qrow:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:-2px}
+#shPrev{table-layout:fixed;width:100%}
+#shPrev th:nth-child(1){width:150px}#shPrev th:nth-child(2){width:auto}#shPrev th:nth-child(3){width:290px}#shPrev th:nth-child(4){width:150px}#shPrev th:nth-child(5){width:96px}
+#shPrev td:nth-child(4){white-space:normal;word-break:break-word}
+#shTbl td:nth-child(5){min-width:320px}
+.sh-imp{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:8px;padding-top:6px}
 
 </style>
 </head>
@@ -521,7 +526,7 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
     <button type="button" class="btn upd" id="bReset" title="Kembalikan simulasi ke data Sheet">↺ <span class="bt">Reset ke data Sheet</span></button>
   </div>
   <div class="top-in tabrow">
-    <nav class="tabs" id="snav" aria-label="Navigasi bagian"><a href="#ringkasan" class="on">Ringkasan</a><a href="#input">Input Output</a><a href="#po">PO &amp; Status</a><a href="#antrean">Antrean</a><a href="#kapasitas">Loading</a><a href="#tba">TBA</a><a href="#orderbaru">Order Baru</a><a href="#aturan">Aturan</a></nav>
+    <nav class="tabs" id="snav" aria-label="Navigasi bagian"><a href="#ringkasan" class="on">Ringkasan</a><a href="#input">Input Output</a><a href="#po">PO &amp; Status</a><a href="#antrean">Antrean</a><a href="#kapasitas">Loading</a><a href="#tba">TBA</a><a href="#sheeter">Sheeter</a><a href="#orderbaru">Order Baru</a><a href="#aturan">Aturan</a></nav>
   </div>
 </header>
 <div class="hero"><div class="hero-in" id="hero"></div></div>
@@ -606,6 +611,29 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
         <div class="tw" style="max-height:520px"><table id="tbaTbl"></table></div>
         <div class="card-h" style="padding-top:4px"><div class="ch-t"><div><h2 style="font-size:15px">Riwayat alokasi</h2><p>Setiap alokasi tercatat di Log_Output sebagai pasangan baris: TBA minus, PO resmi plus.</p></div></div></div>
         <div class="tw" style="max-height:300px"><table id="tbaHist"></table></div>
+      </section>
+
+      <section class="card" id="sheeter">
+        <div class="card-h">
+          <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v6H4z"/><path d="M4 14h16v6H4z"/><path d="M8 7h8M8 17h8"/></svg></span><div><h2>Output sheeter</h2><p>Lembar dari Log_Sheeter dialokasikan ke PO yang belum closed, SW terdekat lebih dulu. Kebutuhan = sisa folding (pack) × CT bahan.</p></div></div>
+          <div class="toolbar"><select id="shPer" aria-label="Periode"></select><input id="shQ" placeholder="Cari item / PO / bahan" style="width:170px"></div>
+        </div>
+        <div class="tba-kpi" id="shKpi"></div>
+        <div id="shImp" class="sh-imp" hidden>
+          <div class="imp-bar">
+            <div class="field"><label for="shFile">File rekap sheeter (Excel)</label><input type="file" id="shFile" accept=".xlsx,.xlsm"></div>
+            <div class="field"><label for="shSheet">Sheet bulan</label><select id="shSheet" disabled></select></div>
+            <div class="field"><label for="shFrom">Dari tanggal</label><input type="date" id="shFrom" disabled></div>
+            <div class="field"><label for="shTo">Sampai</label><input type="date" id="shTo" disabled></div>
+          </div>
+          <p class="mini" id="shInfo" style="padding:0 16px;margin:0 0 8px">Format: sheet per bulan, baris tanggal dengan kolom shift 1–3, kolom KODE BAAN, DESCRIPTION, PO#. DPCI dibaca dari angka dalam kurung, CT dari angka sebelum "CT". Impor ulang periode yang sama menggantikan data lama periode itu.</p>
+          <div class="tw" style="max-height:420px"><table id="shPrev"></table></div>
+          <div class="toolbar pad" style="justify-content:space-between;padding-top:12px"><span class="mini" id="shSum"></span><button type="button" class="btn pri" id="bSh" disabled>Simpan ke Log_Sheeter</button></div>
+        </div>
+        <div class="card-h" style="padding-top:4px"><div class="ch-t"><div><h2 style="font-size:15px">Kesiapan lembar per PO</h2><p>Pack siap dihitung dari bahan yang tercatat di periode ini; item multi-warna dibatasi warna yang paling sedikit.</p></div></div></div>
+        <div class="tw" style="max-height:520px"><table id="shTbl"></table></div>
+        <div class="card-h" style="padding-top:4px"><div class="ch-t"><div><h2 style="font-size:15px">Sisa tampungan per bahan</h2><p>Lembar yang belum menemukan PO outstanding, atau CT-nya belum diketahui.</p></div></div></div>
+        <div class="tw" style="max-height:360px"><table id="shLeft"></table></div>
       </section>
 
       <section class="card" id="orderbaru">
@@ -798,7 +826,7 @@ function simulate(st){
 /* ======================= LAPISAN DATA: Google Sheets lewat konektor ======================= */
 let MCP=null, DB=null, USER=null, LIVE=false, CAN_EDIT=false, MODE='none', PUB_AT=null, IDS={}, ROWS={}, LAST_PUB='';
 const RANGES={P:'Parameter!A5:S63',A:'Aturan_Jadwal!A5:P34',J:'Jadwal_Produksi!A5:AH400',R:'Recap_Order!A5:Z1500',
-  M:'Master_Item!A5:R200',L:'Log_Output!A5:I4000',S:'Ringkasan_PO!A14:M300',H:'Riwayat_Input!A1:A1',V:'Viewer_Feed!A1:A1',Q:'Permintaan_Aturan!A5:F300'};
+  M:'Master_Item!A5:R200',L:'Log_Output!A5:I4000',S:'Ringkasan_PO!A14:M300',H:'Riwayat_Input!A1:A1',V:'Viewer_Feed!A1:A1',K:'Log_Sheeter!A5:J30000',Q:'Permintaan_Aturan!A5:F300'};
 const EPOCH=Date.UTC(1899,11,30);
 function serialToLocal(n){ const d=new Date(EPOCH+Math.round(n*DAY)); return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),d.getUTCHours(),d.getUTCMinutes()).getTime(); }
 function localToSerial(t){ const d=new Date(t); return (Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours(),d.getMinutes())-EPOCH)/DAY; }
@@ -837,13 +865,14 @@ function parseGrid(g){
   const master=[], packings=[]; const M=g['Master_Item']||[];
   M.some(r=>{ if(!S_(r[0])) return true; master.push({item:S_(r[0]),program:S_(r[1]),material:S_(r[2]),ct:N_(r[3]),step:r[4],packing:S_(r[5]),lini:S_(r[6]),tProd:N_(r[7]),tGC:N_(r[8]),harga:N_(r[9]),cek:S_(r[11])}); return false; });
   const std={}; M.forEach(r=>{ if(S_(r[14])){ packings.push(S_(r[13])+'|'+S_(r[14])); std[S_(r[13])+'|'+S_(r[14])]=[N_(r[16]),N_(r[17])]; } });
+  const sheeter=[]; (g['Log_Sheeter']||[]).forEach((r,i)=>{ if(typeof r[0]!=='number'||!S_(r[2])) return; sheeter.push({row:5+i,tgl:D_(r[0]),shift:N_(r[1]),mat:S_(r[2]),desc:S_(r[3]),dpci:S_(r[4]),ct:S_(r[5]),po:S_(r[6]),qty:N_(r[7])||0,src:S_(r[8])}); });
   const logs=[], daily={}; const L=(g['Log_Output']||[]); let lastLog=-1;
   const logPo={}; L.forEach((r,i)=>{ const lp=S_(r[2]); if(lp) (logPo[lp]=logPo[lp]||[]).push(5+i); if(typeof r[0]==='number'){ lastLog=i; const d=D_(r[0]); daily[d]=(daily[d]||0)+(N_(r[4])||0); } });
   L.slice(0,lastLog+1).map((r,i)=>[r,i]).filter(([r])=>typeof r[0]==='number').slice(-300).reverse().forEach(([r,i])=>logs.push({row:5+i,tgl:D_(r[0]),shift:S_(r[1]),po:S_(r[2]),item:S_(r[3]),qty:N_(r[4]),ket:S_(r[5]),nilai:N_(r[8])}));
   const poList=[]; let totalRow=null; (g['Ringkasan_PO']||[]).some((r,i)=>{ if(S_(r[0])==='TOTAL'){ totalRow=14+i; return true; } if(S_(r[1])) poList.push(S_(r[1])); return false; });
   ROWS={jadwalLast:4+jadwal.length,recapLast:4+recap.length,masterLast:4+master.length,logNext:5+lastLog+1,totalRow,logPo};
   const ruleReqs=[]; (g['Permintaan_Aturan']||[]).forEach((r,i)=>{ if(S_(r[2])) ruleReqs.push({row:5+i,at:DT_(r[0]),by:S_(r[1]),teks:S_(r[2]),status:S_(r[3])||'Menunggu',hasil:S_(r[4]),id:S_(r[5])}); });
-  return {params,pola,holidays,rules,jadwal,recap,master,packings,std,logs,daily,poList,ruleReqs,now:isoDT(Date.now())};
+  return {params,pola,holidays,rules,jadwal,recap,master,packings,std,sheeter,logs,daily,poList,ruleReqs,now:isoDT(Date.now())};
 }
 
 /* ---- penulisan: satu update_spreadsheet per aksi (atomik) ---- */
@@ -979,7 +1008,7 @@ function update(){
   const diffs=diffInfo();
   $('chgCount').textContent=diffs.length?diffs.length+' perubahan':'Sesuai Sheet'; $('chgCount').className='xl'+(diffs.length?' changed':'');
   $('scen').textContent=diffs.length?'Skenario simulasi':'Sesuai Sheet'; $('liveDot').className='live'+(diffs.length?' chg':'');
-  renderHero(); renderKpis(); renderLede(diffs); renderQueue(); renderPO(); renderTBA(); renderRQ(); renderCap(); renderDaily(); renderRules();
+  renderHero(); renderKpis(); renderLede(diffs); renderQueue(); renderPO(); renderTBA(); renderSheeter(); renderRQ(); renderCap(); renderDaily(); renderRules();
 }
 function stats(sim,P){ const pos=poSummary(sim.rows,P), os=pos.filter(p=>p.status!=='CLOSED');
   return {pos,os,late:os.filter(p=>p.risk==='Terlambat').length,warn:os.filter(p=>p.risk==='Mepet').length,fin:Math.max(0,...sim.rows.filter(r=>r.q.sisa>0).map(r=>r.end))}; }
@@ -1675,7 +1704,7 @@ async function publishFeed(json){
 }
 async function publishPublic(){
   if(!D||ROLE!=='owner') return;
-  const pub=Object.assign({},D); delete pub.masterMap; pub.params=Object.assign({},D.params); delete pub.params.admins;
+  const pub=Object.assign({},D); delete pub.masterMap; if(pub.sheeter){ const lim=isoDate(Date.now()-75*DAY); pub.sheeter=pub.sheeter.filter(r=>r.tgl>=lim).map(r=>Object.assign({},r,{row:undefined})); } pub.params=Object.assign({},D.params); delete pub.params.admins;
   const json=JSON.stringify(pub); publishFeed(json); if(!DB||json===LAST_PUB) return;
   try{ const cur=await DB.doc('public/latest').get(); if(cur.exists&&cur.data().json===json){ LAST_PUB=json; return; }
     await DB.doc('public/latest').set({json,at:Date.now()}); LAST_PUB=json; }catch(e){ toast('Data terbaru belum bisa diterbitkan untuk tim: '+((e&&e.message)||e),true); }
@@ -1767,7 +1796,7 @@ function startQLog(){
     PEND_EDITS=rows.filter(r=>r.type==='editlog'&&r.status==='pending').map(r=>{ try{ return JSON.parse(r.payload).row; }catch(e){ return null; } }).filter(Boolean); if(D) renderLogs();
     const names={}; if(USER){ try{ const ids=[...new Set(rows.map(r=>r.by).filter(Boolean))]; const ps=ids.length?await USER.profiles(ids):{}; ids.forEach(i=>names[i]=(ps[i]&&ps[i].name)||'Editor'); }catch(e){} }
     const st={pending:'<span class="pill warn">Menunggu sinkron</span>',done:'<span class="pill ok">Masuk Sheet</span>',error:'<span class="pill late">Gagal</span>'};
-    const tp={output:'Output',order:'Order baru',scenario:'Skenario',baseline:'Baseline',editlog:'Ubah output',editpo:'Ubah PO',alokasi:'Alokasi TBA',rulereq:'Permintaan aturan',orderbatch:'Impor PO',qorder:'Urutan antrean'};
+    const tp={output:'Output',order:'Order baru',scenario:'Skenario',baseline:'Baseline',editlog:'Ubah output',editpo:'Ubah PO',alokasi:'Alokasi TBA',rulereq:'Permintaan aturan',orderbatch:'Impor PO',sheeter:'Output sheeter',qorder:'Urutan antrean'};
     $('qLog').innerHTML=`<thead><tr><th>Dikirim</th><th>Oleh</th><th>Jenis</th><th>Isi</th><th>Status</th>${ROLE==='owner'?'<th></th>':''}</tr></thead><tbody>`+
       (rows.map(r=>`<tr><td class="num" style="font-size:12px">${fDT(r.at)}</td><td>${esc(names[r.by]||'Editor')}</td><td>${tp[r.type]||esc(r.type)}</td><td style="white-space:normal;max-width:420px">${esc(r.summary||'')}${r.msg?`<div class="src" style="color:var(--late)">${esc(r.msg)}</div>`:''}</td><td>${st[r.status]||esc(r.status)}</td>${ROLE==='owner'?`<td>${r.status==='error'?`<button type="button" class="btn sm" data-retry="${esc(r.id)}">Ulangi</button>`:''}</td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="empty">Belum ada pengajuan.</td></tr>`)+'</tbody>';
     $('qLog').querySelectorAll('[data-retry]').forEach(b=>b.onclick=async()=>{ try{ await DB.collection('queue').doc(b.dataset.retry).update({status:'pending',msg:''}); }catch(e){ toast('Gagal mengulang: '+e.message,true); } });
@@ -1868,6 +1897,16 @@ const APPLY={
     await write([{copyPaste:{source:gr('Log_Output',r0-1,7,r0-1,10),destination:gr('Log_Output',r0,7,r0+n-1,10),pasteType:'PASTE_FORMULA'}},upd('Log_Output',r0,1,rowsOut),
       logReq('Alokasi TBA',p.lines.length,`${p.item} ${tot} pack: `+p.lines.map(l=>l.po+'='+l.qty).join(', ')+(p.ket?' | '+p.ket:''),who)]);
   },
+  async sheeter(p,who){
+    const fresh=await readSheet(), sid=IDS['Log_Sheeter'];
+    if(sid==null) throw Object.assign(new Error('Sheet Log_Sheeter belum ada.'),{code:'stale'});
+    const del=fresh.sheeter.filter(r=>r.tgl>=p.from&&r.tgl<=p.to).map(r=>r.row).sort((a,b)=>b-a), reqs=[];
+    let i=0; while(i<del.length){ let hi=del[i], lo=hi; while(i+1<del.length&&del[i+1]===lo-1){ i++; lo=del[i]; } reqs.push({deleteDimension:{range:{sheetId:sid,dimension:'ROWS',startIndex:lo-1,endIndex:hi}}}); i++; }
+    const now={date:Date.now()};
+    for(let k=0;k<p.rows.length;k+=2000){ reqs.push({appendCells:{sheetId:sid,rows:p.rows.slice(k,k+2000).map(r=>({values:[cv({date:parseDT(r[0])}),cv(r[1]),cv(r[2]),cv(r[3]),cv(r[4]),cv(r[5]),cv(r[6]),cv(r[7]),cv(p.src),cv(now)]})),fields:'userEnteredValue'}}); }
+    reqs.push(logReq('Impor output sheeter',p.rows.length,`${p.src} · ${p.from} s.d. ${p.to} · ${p.rows.reduce((a,r)=>a+r[7],0)} lembar`+(del.length?` (mengganti ${del.length} baris lama)`:''),who));
+    await write(reqs);
+  },
   async rulereq(p,who){
     await readSheet(); const sid=IDS['Permintaan_Aturan'];
     if(sid==null) throw Object.assign(new Error('Sheet Permintaan_Aturan belum ada.'),{code:'stale'});
@@ -1938,7 +1977,7 @@ async function saveOrd(){
 }
 
 /* ======================= PEMBACA XLSX MINI (tanpa pustaka luar) ======================= */
-async function xlsxRead(buf){
+async function xlsxRead(buf,opt){
   const u=new Uint8Array(buf), dv=new DataView(buf), td=new TextDecoder();
   let e=-1; for(let i=u.length-22;i>=Math.max(0,u.length-70000);i--){ if(dv.getUint32(i,true)===0x06054b50){ e=i; break; } }
   if(e<0) throw new Error('Bukan file .xlsx (zip tidak dikenali). Simpan ulang sebagai Excel Workbook (.xlsx).');
@@ -1957,10 +1996,9 @@ async function xlsxRead(buf){
   const wbx=X(await get('xl/workbook.xml')||''), rels={}; const rx=await get('xl/_rels/workbook.xml.rels');
   if(rx) kids(X(rx).documentElement,'Relationship').forEach(r=>rels[r.getAttribute('Id')]=r.getAttribute('Target'));
   const colIdx=ref=>{ let c=0; for(const ch of ref.replace(/\d+/g,'')) c=c*26+(ch.charCodeAt(0)-64); return c-1; };
-  const out={SheetNames:[],rows:{}};
-  for(const sh of kids(wbx.documentElement,'sheet')){
-    const name=sh.getAttribute('name'), rid=sh.getAttribute('r:id')||sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
-    let tg=rels[rid]||''; tg=tg.replace(/^\/?xl\//,'').replace(/^\//,''); const xml=await get('xl/'+tg); if(!xml) continue;
+  const list=kids(wbx.documentElement,'sheet').map(sh=>{ const rid=sh.getAttribute('r:id')||sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+    let tg=rels[rid]||''; tg=tg.replace(/^\/?xl\//,'').replace(/^\//,''); return {name:sh.getAttribute('name'),path:'xl/'+tg}; });
+  const load=async name=>{ const it=list.find(x=>x.name===name); const xml=it?await get(it.path):null; if(!xml) return null;
     const rows=[]; kids(X(xml).documentElement,'row').forEach(rw=>{ const ri=(+rw.getAttribute('r')||rows.length+1)-1; const arr=rows[ri]=rows[ri]||[];
       kids(rw,'c').forEach((c,ci)=>{ const ref=c.getAttribute('r'), j=ref?colIdx(ref):ci, ty=c.getAttribute('t'); const v=kids(c,'v')[0]; let val=null;
         if(ty==='s') val=v?(ss[+v.textContent]??null):null;
@@ -1969,10 +2007,92 @@ async function xlsxRead(buf){
         else if(ty==='b') val=v?v.textContent==='1':null;
         else if(v&&v.textContent!=='') val=+v.textContent;
         arr[j]=val; }); });
-    for(let i=0;i<rows.length;i++) rows[i]=rows[i]||[];
-    out.SheetNames.push(name); out.rows[name]=rows; }
+    for(let i=0;i<rows.length;i++) rows[i]=rows[i]||[]; return rows; };
+  if(opt&&opt.lazy) return {SheetNames:list.map(x=>x.name),load};
+  const out={SheetNames:[],rows:{}};
+  for(const it of list){ const rows=await load(it.name); if(!rows) continue; out.SheetNames.push(it.name); out.rows[it.name]=rows; }
   return out;
 }
+
+/* ======================= OUTPUT SHEETER ======================= */
+const SH_SEED={'A053034481|3448':8,'A053000012-17165|3448':8,'A05300292C|6114':7,'A053013366|3366':16,'A05302757C|0369':5,'A053000052|0369':5,'A05300213C|0369':5};
+const SH_MON=[['jan'],['feb'],['mar'],['apr'],['mei','may'],['jun'],['jul'],['agu','ags','aug'],['sep'],['okt','oct'],['nov'],['des','dec']];
+let SHF=null, SHP=null; // file workbook, preview {sheet,rows:[...],groups}
+function shFull(d){ if(/^3TIS/i.test(d)) return d.toUpperCase(); const hit=D.master.filter(m=>m.item.endsWith('-'+d)); return hit.length===1?hit[0].item:({'3366':'053-01-3366','3448':'053-02-3448','1561':'053-08-1561','0351':'053-08-0351','6609':'053-02-6609'}[d]||'053-05-'+d); }
+function shDesc(desc){ const S=String(desc||'').toUpperCase(), toks=[]; const re=/\(+\s*(3TIS\d{4}|\d{4})\s*\)|(?<=\))\s*(\d{4})\b|(?<![\dA-Z])(\d{4})\)|(?<![A-Z\d])(\d+)\s*C(?:T)?\b/g; let m;
+  while((m=re.exec(S))){ if(m[4]) toks.push({ct:+m[4]}); else toks.push({d:m[1]||m[2]||m[3]}); }
+  const out=[]; let pend=null;
+  toks.forEach((t,i)=>{ if(t.ct!=null){ const later=toks.slice(i+1).some(x=>x.d); if(!later&&out.length) out[out.length-1].ct=t.ct; else pend=t.ct; }
+    else if(!out.some(o=>o.d===t.d)) out.push({d:t.d,ct:pend}); });
+  return out; }
+function shCtMemo(){ const m=Object.assign({},SH_SEED); (D.sheeter||[]).forEach(r=>{ const ds=r.dpci.split(',').map(x=>x.trim()), cs=String(r.ct).split(',').map(x=>x.trim()); ds.forEach((d,i)=>{ if(+cs[i]) m[r.mat.slice(0,16)+'|'+d.slice(-4)]=+cs[i]; }); }); return m; }
+function shPickSheet(names){ const now=new Date(), mi=now.getMonth(), y=String(now.getFullYear());
+  const c=names.filter(n=>!/RI?JECT|REJECT/i.test(n)).filter(n=>{ const l=n.toLowerCase(); return SH_MON[mi].some(t=>l.includes(t))&&(!/\d{4}/.test(n)||n.includes(y)); });
+  return c[0]||names.filter(n=>!/RI?JECT|REJECT/i.test(n)).slice(-1)[0]; }
+async function shLoadFile(f){ $('shInfo').textContent='Membaca file…';
+  try{ if(typeof DecompressionStream==='undefined') throw new Error('Browser ini belum mendukung baca Excel. Pakai Chrome/Edge terbaru.');
+    SHF=await xlsxRead(await f.arrayBuffer(),{lazy:true}); SHF.file=f.name;
+    $('shSheet').innerHTML=SHF.SheetNames.map(n=>`<option>${esc(n)}</option>`).join(''); $('shSheet').disabled=false; $('shSheet').value=shPickSheet(SHF.SheetNames);
+    await shParseSheet(true); }catch(e){ SHF=null; SHP=null; $('shInfo').innerHTML=`<span style="color:var(--late)">${esc(e.message||e)}</span>`; renderShPrev(); } }
+async function shParseSheet(resetDates){ const name=$('shSheet').value; $('shInfo').textContent='Membaca sheet '+name+'…';
+  const rows=await SHF.load(name); if(!rows) throw new Error('Sheet '+name+' kosong.');
+  const hi=rows.findIndex(r=>String(r[0]||'').trim().toUpperCase()==='CUSTOMER'); if(hi<0) throw new Error('Baris judul "CUSTOMER" tidak ditemukan di sheet '+name+'.');
+  const H=rows[hi]; let si=-1; for(let k=hi+1;k<hi+5&&k<rows.length;k++){ if((rows[k]||[]).some(v=>v===1)&&(rows[k]||[]).some(v=>v===2)){ si=k; break; } }
+  if(si<0) throw new Error('Baris nomor shift (1, 2, 3) tidak ditemukan.');
+  const cols=[]; let cur=null; for(let j=8;j<Math.max(H.length,rows[si].length);j++){ if(typeof H[j]==='number'&&H[j]>40000) cur=isoDate(serialToLocal(H[j])); const sh=rows[si][j]; if(cur&&(sh===1||sh===2||sh===3)) cols.push({j,d:cur,sh}); }
+  const memo=shCtMemo(), out=[];
+  rows.slice(si+1).forEach(r=>{ const mat=String(r[1]||'').trim(); if(!/^A/i.test(mat)) return; const desc=String(r[2]||'').trim(); const ds=shDesc(desc);
+    ds.forEach(x=>{ if(!x.ct) x.ct=memo[mat.slice(0,16)+'|'+x.d]||memo[mat.slice(0,10)+'|'+x.d]||null; });
+    cols.forEach(c=>{ const v=r[c.j]; if(typeof v==='number'&&v) out.push({tgl:c.d,shift:c.sh,mat,desc,po:String(r[3]??'').trim(),qty:v,ds}); }); });
+  const inFile={}; out.forEach(o=>o.ds.forEach(x=>{ if(x.ct) inFile[o.mat+'|'+x.d]=x.ct; })); out.forEach(o=>o.ds.forEach(x=>{ if(!x.ct&&inFile[o.mat+'|'+x.d]) x.ct=inFile[o.mat+'|'+x.d]; }));
+  const dates=cols.map(c=>c.d); const today=isoDate(Date.now());
+  if(resetDates||!$('shFrom').value){ $('shFrom').value=dates[0]||''; const last=out.map(o=>o.tgl).sort().slice(-1)[0]||dates.slice(-1)[0]; $('shTo').value=last&&last<today?last:(today<dates.slice(-1)[0]?today:dates.slice(-1)[0]); }
+  ['shFrom','shTo'].forEach(id=>{ $(id).disabled=false; $(id).min=dates[0]; $(id).max=dates.slice(-1)[0]; });
+  SHP={sheet:name,all:out}; $('shInfo').textContent=`${SHF.file} · sheet ${name} · ${dates[0]?fD(parseDT(dates[0])):''} s.d. ${dates.length?fD(parseDT(dates.slice(-1)[0])):''}. Periode yang sama di Log_Sheeter akan diganti.`; shGroup(); }
+function shGroup(){ if(!SHP) return; const f=$('shFrom').value, t=$('shTo').value; const g=new Map();
+  SHP.all.filter(o=>o.tgl>=f&&o.tgl<=t).forEach(o=>{ const k=o.mat+'|'+o.desc; const x=g.get(k)||{mat:o.mat,desc:o.desc,ds:o.ds,qty:0,n:0,pos:new Set()}; x.qty+=o.qty; x.n++; x.pos.add(o.po); g.set(k,x); });
+  SHP.groups=[...g.values()]; renderShPrev(); }
+function renderShPrev(){ const G=SHP?SHP.groups||[]:[];
+  $('shPrev').innerHTML=G.length?`<thead><tr><th>Kode bahan</th><th>Deskripsi</th><th>DPCI · CT (lembar/pack)</th><th>PO di file</th><th class="r">Lembar</th></tr></thead><tbody>`+
+    G.map((x,gi)=>`<tr class="${x.ds.length&&x.ds.every(d=>d.ct)?'':'le-pend'}"><td class="num">${esc(x.mat)}</td><td style="white-space:normal">${esc(x.desc)}</td><td>${x.ds.length?x.ds.map((d,di)=>`<span class="chip mono">${esc(shFull(d.d))} <input type="number" min="1" class="${d.ct?'':'chg'}" data-g="${gi}" data-d="${di}" value="${d.ct||''}" placeholder="CT?" style="width:52px"></span>`).join(' '):'<span class="pill late">DPCI tidak terbaca</span>'}</td><td class="mini">${esc([...x.pos].join(', '))}</td><td class="r num">${nf.format(x.qty)}</td></tr>`).join('')+'</tbody>':'';
+  $('shPrev').querySelectorAll('[data-g]').forEach(el=>el.onchange=()=>{ const v=+el.value||null; const x=SHP.groups[+el.dataset.g], d=x.ds[+el.dataset.d]; d.ct=v; SHP.all.forEach(o=>{ if(o.mat===x.mat&&o.desc===x.desc) o.ds[+el.dataset.d].ct=v; }); renderShPrev(); });
+  const miss=G.filter(x=>!x.ds.length||x.ds.some(d=>!d.ct)).length, tot=G.reduce((a,x)=>a+x.qty,0);
+  $('shSum').textContent=G.length?`${G.length} bahan · ${nf.format(tot)} lembar · ${$('shFrom').value} s.d. ${$('shTo').value}`+(miss?` · ${miss} bahan belum lengkap DPCI/CT (isi kotak CT kuning)`:''):'';
+  $('bSh').disabled=!G.length||miss>0; }
+async function shSave(){ if(!SHP) return; const f=$('shFrom').value, t=$('shTo').value;
+  const rows=SHP.all.filter(o=>o.tgl>=f&&o.tgl<=t).map(o=>[o.tgl,o.shift,o.mat,o.desc,o.ds.map(d=>shFull(d.d)).join(', '),o.ds.map(d=>d.ct).join(', '),o.po,o.qty]);
+  const old=(D.sheeter||[]).filter(r=>r.tgl>=f&&r.tgl<=t).length;
+  if(!await ask('Simpan output sheeter?',`<p class="note" style="font-size:13.5px">${nf.format(rows.length)} baris (${nf.format(rows.reduce((a,r)=>a+r[7],0))} lembar), ${esc(fD(parseDT(f)))} s.d. ${esc(fD(parseDT(t)))}.${old?` <b>${old} baris lama</b> di periode ini diganti.`:''}</p>`)) return;
+  const ok=await submit('sheeter',{from:f,to:t,src:SHF.file+' · '+SHP.sheet,rows},`Impor sheeter ${f} s.d. ${t}: ${rows.length} baris`,'Output sheeter tersimpan di Log_Sheeter.');
+  if(ok){ SHP=null; SHF=null; $('shFile').value=''; ['shSheet','shFrom','shTo'].forEach(id=>$(id).disabled=true); renderShPrev(); } }
+function shAlloc(rows){
+  const pools=new Map(); rows.forEach(r=>{ const k=r.mat+'|'+r.dpci+'|'+r.ct; const p=pools.get(k)||{mat:r.mat,desc:r.desc,dpci:r.dpci.split(',').map(x=>x.trim()).filter(Boolean),ct:String(r.ct).split(',').map(x=>+x.trim()||0),qty:0}; p.qty+=r.qty; pools.set(k,p); });
+  const open=D.recap.filter(r=>r.status!=='CLOSED'&&r.status!=='TAMPUNGAN'&&r.status!=='TIDAK PRODUKSI'&&r.sisa>0&&r.po!=='TBA').slice().sort((a,b)=>(a.sw||'9999').localeCompare(b.sw||'9999')||a.po.localeCompare(b.po));
+  const used=new Map(), alloc=[], left=[];
+  pools.forEach(p=>{ let rem=p.qty; const needs=open.filter(r=>p.dpci.includes(r.item));
+    needs.forEach(r=>{ if(rem<=0) return; const ct=p.ct[p.dpci.indexOf(r.item)]; if(!ct) return; const k=r.po+'|'+r.item+'|'+p.mat; const need=r.sisa*ct-(used.get(k)||0); if(need<=0) return; const take=Math.min(rem,need); rem-=take; used.set(k,(used.get(k)||0)+take); alloc.push({po:r.po,item:r.item,sw:r.sw,sisa:r.sisa,status:r.status,mat:p.mat,desc:p.desc,ct,sheets:take,packs:take/ct}); });
+    if(rem>0) left.push({mat:p.mat,desc:p.desc,dpci:p.dpci,ct:p.ct,qty:p.qty,rem,why:p.ct.some(c=>!c)?'CT belum diketahui':needs.length?'kebutuhan PO outstanding sudah terpenuhi':'belum ada PO outstanding untuk DPCI ini'}); });
+  const by=new Map(); alloc.forEach(a=>{ const k=a.po+'|'+a.item; const x=by.get(k)||{po:a.po,item:a.item,sw:a.sw,sisa:a.sisa,status:a.status,mats:[]}; x.mats.push(a); by.set(k,x); });
+  const items=[...by.values()].map(x=>Object.assign(x,{sheets:x.mats.reduce((s,m)=>s+m.sheets,0),ready:Math.floor(Math.min(...x.mats.map(m=>m.packs)))}));
+  items.sort((a,b)=>(a.sw||'9999').localeCompare(b.sw||'9999')||a.po.localeCompare(b.po)||a.item.localeCompare(b.item));
+  return {items,left,total:rows.reduce((a,r)=>a+r.qty,0),alloc:alloc.reduce((a,x)=>a+x.sheets,0)}; }
+function renderSheeter(){ if(!D) return; const ed=canEditUI(); $('shImp').hidden=!ed;
+  const R=D.sheeter||[], mons=[...new Set(R.map(r=>r.tgl.slice(0,7)))].sort().reverse(), sel=$('shPer'), cur=sel.value;
+  const MN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  sel.innerHTML=mons.map(m=>`<option value="${m}">${MN[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join('')||'<option value="">Belum ada data</option>'; if(mons.includes(cur)) sel.value=cur;
+  const per=sel.value, rows=R.filter(r=>per&&r.tgl.startsWith(per)), q=($('shQ').value||'').toLowerCase().trim();
+  const A=shAlloc(rows), full=A.items.filter(x=>x.ready>=x.sisa).length;
+  $('shKpi').innerHTML=`<div><span>Output periode</span><b>${nf.format(A.total)}</b><small>lembar${rows.length?' · s.d. '+fD(parseDT(rows.map(r=>r.tgl).sort().slice(-1)[0])):''}</small></div><div><span>Teralokasi ke PO</span><b>${nf.format(A.alloc)}</b><small>lembar · ${A.total?Math.round(A.alloc/A.total*100):0}%</small></div><div><span>Item PO tersuplai</span><b>${A.items.length}</b><small>${full} cukup untuk seluruh sisa</small></div><div><span>Sisa tampungan</span><b>${nf.format(A.total-A.alloc)}</b><small>lembar belum ber-PO</small></div>`;
+  const mt=x=>!q||(x.po+' '+x.item+' '+x.mats.map(m=>m.mat+' '+m.desc).join(' ')).toLowerCase().includes(q);
+  $('shTbl').innerHTML=`<thead><tr><th>PO</th><th>SW</th><th>Item</th><th class="r">Sisa folding</th><th>Bahan · lembar teralokasi</th><th class="r">Pack siap</th><th>Status</th></tr></thead><tbody>`+
+    (A.items.filter(mt).map(x=>`<tr><td class="num"><b>${esc(x.po)}</b></td><td class="num">${x.sw?fD(parseDT(x.sw)):'–'}</td><td class="num">${esc(x.item)}</td><td class="r num">${nf.format(x.sisa)}</td><td style="white-space:normal">${x.mats.map(m=>`<span class="chip mono" title="${esc(m.desc)}">${esc(m.desc.replace(/\s*\(.*$/,'').slice(0,26))} · ${nf.format(m.sheets)} · ${nf.format(Math.floor(m.packs))} pk</span>`).join(' ')}</td><td class="r num"><b>${nf.format(x.ready)}</b></td><td>${x.ready>=x.sisa?'<span class="pill ok">Cukup</span>':x.ready>0?'<span class="pill warn">Sebagian</span>':'<span class="pill late">Kurang</span>'}</td></tr>`).join('')||`<tr><td colspan="7" class="empty">${rows.length?'Tidak ada output yang cocok dengan PO outstanding.':'Belum ada output sheeter di periode ini.'}</td></tr>`)+'</tbody>';
+  const L=A.left.filter(l=>!q||(l.mat+' '+l.desc+' '+l.dpci.join(' ')).toLowerCase().includes(q)).sort((a,b)=>b.rem-a.rem);
+  $('shLeft').innerHTML=`<thead><tr><th>Kode bahan</th><th>Deskripsi</th><th>DPCI</th><th class="r">Output</th><th class="r">Sisa</th><th>Keterangan</th></tr></thead><tbody>`+
+    (L.map(l=>`<tr><td class="num">${esc(l.mat)}</td><td style="white-space:normal">${esc(l.desc)}</td><td class="num" style="white-space:normal">${esc(l.dpci.join(', '))}</td><td class="r num">${nf.format(l.qty)}</td><td class="r num"><b>${nf.format(l.rem)}</b></td><td class="mini">${esc(l.why)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">Tidak ada sisa.</td></tr>')+'</tbody>'; }
+$('shFile').onchange=e=>{ const f=e.target.files[0]; if(f) shLoadFile(f); };
+$('shSheet').onchange=async()=>{ try{ await shParseSheet(true); }catch(e){ SHP=null; $('shInfo').innerHTML=`<span style="color:var(--late)">${esc(e.message||e)}</span>`; renderShPrev(); } };
+$('shFrom').onchange=$('shTo').onchange=shGroup; $('bSh').onclick=shSave;
+$('shPer').onchange=renderSheeter; $('shQ').oninput=renderSheeter;
 
 /* ======================= IMPOR FILE REKAP PO (format Target) ======================= */
 let IMP=null; // {file, lines:[{sheet,program,po,item,qty,cp,sw,desc}], pos:{po:{sw,n}}}
