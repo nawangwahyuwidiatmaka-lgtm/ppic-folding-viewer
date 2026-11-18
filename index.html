@@ -1650,7 +1650,7 @@ async function readFeed(first){
     const col=csvCol(await r.text()); const hd=(col[1]||'').split('|'); if(hd[0]!=='v1') throw new Error('Feed belum terisi');
     const n=+hd[2], json=col.slice(2,2+n).join(''); PUB_AT=+hd[1]||null;
     if(json!==FEED_LAST){ FEED_LAST=json; MODE='public'; setData(JSON.parse(json)); }
-  }catch(e){ if(first||!D){ setBanner('warn','Data belum bisa dimuat','Feed data dari Google Sheet belum terjangkau ('+((e&&e.message)||e)+'). Coba muat ulang sebentar lagi.'); $('srcTxt').textContent='Tidak tersambung'; } }
+  }catch(e){ if(!D) applyRole(); if(first||!D){ setBanner('warn','Data belum bisa dimuat','Feed data dari Google Sheet belum terjangkau ('+((e&&e.message)||e)+'). Coba muat ulang sebentar lagi.'); $('srcTxt').textContent='Tidak tersambung'; } }
 }
 let FEED_ON=false;
 function watchFeed(){ if(FEED_ON) return; FEED_ON=true; $('srcTxt').textContent='Memuat data terbit…'; readFeed(true); setInterval(()=>{ if(!document.hidden) readFeed(false); },3*60000); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) readFeed(false); }); }
