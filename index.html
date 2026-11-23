@@ -507,6 +507,28 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
 #qTbl tr.qrow{cursor:pointer}
 #qTbl tr.qrow:hover td{background:var(--hover,rgba(127,127,127,.07))}
 #qTbl tr.qrow:focus-visible{outline:2px solid var(--accent,#2563eb);outline-offset:-2px}
+/* pencarian global di header */
+.top-in.tabrow{flex-wrap:nowrap}
+.gs{position:relative;order:2;margin-left:auto;flex:0 1 360px;min-width:220px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:10px;padding:0 10px;height:38px}
+.gs:focus-within{background:#fff;border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.35)}
+.gs svg{width:16px;height:16px;flex:none;fill:none;stroke:rgba(255,255,255,.85);stroke-width:2;stroke-linecap:round}
+.gs:focus-within svg{stroke:#475569}
+.gs input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#fff;font:inherit;font-size:13.5px;padding:0;height:100%;box-shadow:none}
+.gs input::placeholder{color:rgba(255,255,255,.78)}
+.gs:focus-within input{color:#0f172a}.gs:focus-within input::placeholder{color:#64748b}
+.gs input::-webkit-search-cancel-button{cursor:pointer}
+.gs kbd{font:600 11px/1 ui-monospace,monospace;color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.4);border-radius:5px;padding:3px 6px}
+.gs:focus-within kbd{display:none}
+.gs-list{position:absolute;top:calc(100% + 6px);right:0;width:min(520px,calc(100vw - 24px));max-height:min(70vh,520px);overflow:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px rgba(15,23,42,.25);padding:6px;z-index:60}
+.gs-g{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 10px 4px}
+.gs-i{display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;cursor:pointer;color:inherit;font:inherit}
+.gs-i b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.gs-i small{grid-column:1/-1;color:var(--muted);font-size:12px}
+.gs-i:hover,.gs-i.on{background:var(--surface-2)}
+.gs-i mark{background:rgba(250,204,21,.45);color:inherit;border-radius:2px}
+.gs-tag{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px;align-self:center}
+.gs-empty{padding:14px 12px;color:var(--muted);font-size:13px}
+@media (max-width:820px){.top-in.tabrow{flex-wrap:wrap}.gs{order:-1;flex:1 1 100%;margin-left:0}.gs kbd{display:none}}
 
 </style>
 </head>
@@ -521,6 +543,7 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
     <button type="button" class="btn upd" id="bReset" title="Kembalikan simulasi ke data Sheet">↺ <span class="bt">Reset ke data Sheet</span></button>
   </div>
   <div class="top-in tabrow">
+    <div class="gs" id="gs" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="gsQ" type="search" placeholder="Cari PO, item / DPCI, program, customer…" autocomplete="off" aria-label="Cari di dashboard" aria-controls="gsList" aria-expanded="false"><kbd>/</kbd><div class="gs-list" id="gsList" role="listbox" hidden></div></div>
     <nav class="tabs" id="snav" aria-label="Navigasi bagian"><a href="#ringkasan" class="on">Ringkasan</a><a href="#input">Input Output</a><a href="#po">PO &amp; Status</a><a href="#antrean">Antrean</a><a href="#kapasitas">Loading</a><a href="#tba">TBA</a><a href="#orderbaru">Order Baru</a><a href="#aturan">Aturan</a></nav>
   </div>
 </header>
@@ -1165,6 +1188,13 @@ $('rqGo').onclick=sendRQ;
 function kdData(key){
   const s=stats(SIM,ST.params), act=SIM.rows.filter(r=>r.q.sisa>0), rec=(po,it)=>D.recap.find(r=>r.po===po&&r.item===it)||{};
   const gapTd=g=>g==null?'–':nf1.format(g), chip=(a,b)=>`<div><span>${a}</span><b>${b}</b></div>`;
+  if(key.startsWith('item:')){ const it=key.slice(5), m=D.masterMap[it]||{}, L=D.recap.filter(r=>r.item===it).slice().sort((a,b)=>(a.sw||'9999').localeCompare(b.sw||'9999'));
+    const sr=po=>SIM.rows.find(r=>r.q.po===po&&r.q.item===it), os=L.filter(r=>r.sisa>0&&!isTamp(r));
+    return {t:it,sub:(m.program||(L[0]||{}).program||'')+(m.packing?' · '+m.packing+' step '+m.step:''),
+      sum:chip('Sisa outstanding',nf.format(os.reduce((a,r)=>a+r.sisa,0))+' pack')+chip('PO outstanding',os.length)+chip('Target GC',nf1.format(m.tGC||0)+'/jam/MP')+chip('Harga',m.harga?fRp(m.harga):'–'),
+      h:['PO','Customer','SW','Qty','Output','Sisa','Status','Rencana selesai','Gap (hari)','Antrean'],
+      r:L.map(r=>{ const q=sr(r.po); return [`<b>${esc(r.po)}</b>`,esc(r.cust||''),r.sw?fD(parseDT(r.sw)):'–',r.qty?nf.format(r.qty):'–',nf.format(r.output||0),nf.format(r.sisa||0),esc(r.status||''),q&&q.q.sisa>0?fDT(q.end):'–',q&&q.q.sisa>0?gapTd(q.gap):'–',q&&q.q.sisa>0?'#'+q.no:'–']; }),
+      go:['antrean','Lihat di antrean',()=>{ const x=$('qSearch'); if(x){ x.value=it; x.dispatchEvent(new Event('input')); } }]}; }
   switch(key){
   case 'ontime': { const L=s.os.slice().sort((a,b)=>(a.gap??1e9)-(b.gap??1e9));
     return {t:'PO tepat waktu',sub:'PO outstanding diurutkan dari gap paling sempit. Gap = hari antara rencana selesai dan SW.',
@@ -1207,7 +1237,7 @@ function openKD(key){ if(!SIM||!D) return; const d=kdData(key); if(!d) return;
   const numCol=i=>!['PO','#','Item','Tanggal','Bulan','SW'].includes(d.h[i])&&d.r.length&&d.r.every(row=>/^[\d.,\s%jRp–+-]*$/.test(String(row[i]).replace(/<[^>]+>/g,'').replace(/jt|M|jam| j/g,'')));
   $('kdTbl').innerHTML=`<thead><tr>${d.h.map((h,i)=>`<th class="${numCol(i)?'r':''}">${h}</th>`).join('')}</tr></thead><tbody>`+(d.r.map(row=>`<tr>${row.map((c,i)=>`<td class="${numCol(i)?'r num':''}">${c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${d.h.length}" class="empty">Tidak ada data.</td></tr>`)+'</tbody>';
   delete $('kdTbl').dataset.nosort; $('kdNote').textContent='Klik judul kolom untuk mengurutkan.'; delete SORT.kdTbl; applySort($('kdTbl'));
-  const g=$('kdGo'); g.hidden=!d.go; if(d.go){ g.textContent=d.go[1]; g.onclick=()=>{ closeKD(); const el=document.getElementById(d.go[0]); if(el) el.scrollIntoView({behavior:'smooth'}); }; }
+  const g=$('kdGo'); g.hidden=!d.go; if(d.go){ g.textContent=d.go[1]; g.onclick=()=>{ closeKD(); if(d.go[2]) d.go[2](); const el=document.getElementById(d.go[0]); if(el) el.scrollIntoView({behavior:'smooth'}); }; }
   $('kdDlg').hidden=false; $('kdNo').focus(); }
 function openQD(i){ const r=SIM&&SIM.rows[i]; if(!r) return; const chip=(a,b)=>`<div><span>${a}</span><b>${b}</b></div>`; const q=r.q, P=ST.params, m=D.masterMap[q.item]||{};
   const rc=D.recap.find(x=>x.po===q.po&&x.item===q.item)||{}; const sk=m.step!=null?String(m.step)+'|'+(m.packing||''):''; const sd=(D.std||{})[sk];
@@ -1973,6 +2003,33 @@ async function xlsxRead(buf){
     out.SheetNames.push(name); out.rows[name]=rows; }
   return out;
 }
+
+/* ======================= PENCARIAN GLOBAL ======================= */
+(function(){ const inp=$('gsQ'), box=$('gsList'); let res=[], sel=-1;
+  const hl=(t,q)=>{ const s=esc(t), i=t.toLowerCase().indexOf(q); return i<0?s:esc(t.slice(0,i))+'<mark>'+esc(t.slice(i,i+q.length))+'</mark>'+esc(t.slice(i+q.length)); };
+  const secs=[...document.querySelectorAll('#snav a')];
+  function search(q){ const out=[]; if(!D||!SIM) return out; const ql=q.toLowerCase();
+    const pos=poSummary(SIM.rows,ST.params);
+    pos.filter(p=>(p.po+' '+p.cust).toLowerCase().includes(ql)).slice(0,6).forEach(p=>out.push({g:'PO',t:p.po,d:`${p.cust} · SW ${p.sw?fD(p.sw):'–'} · ${p.items} item · sisa ${nf.format(p.sisa)}`,tag:p.status==='CLOSED'?'CLOSED':p.risk,go:()=>openPD(p.po)}));
+    const items=[...new Set(D.recap.map(r=>r.item).concat(D.master.map(m=>m.item)))];
+    items.map(it=>{ const m=D.masterMap[it]||{}, rs=D.recap.filter(r=>r.item===it); return {it,prog:m.program||(rs[0]||{}).program||'',sisa:rs.filter(r=>!isTamp(r)).reduce((a,r)=>a+(r.sisa||0),0),n:rs.filter(r=>r.sisa>0&&!isTamp(r)).length}; })
+      .filter(x=>(x.it+' '+x.it.replace(/-/g,'')+' '+x.prog).toLowerCase().includes(ql)).sort((a,b)=>b.sisa-a.sisa).slice(0,8)
+      .forEach(x=>out.push({g:'Item / DPCI',t:x.it,d:`${x.prog.replace(/^D53\s*/,'')} · ${x.n} PO outstanding · sisa ${nf.format(x.sisa)}`,tag:x.sisa>0?'':'selesai',go:()=>openKD('item:'+x.it)}));
+    secs.filter(a=>!a.hidden&&a.textContent.toLowerCase().includes(ql)).forEach(a=>out.push({g:'Menu',t:a.textContent,d:'Pindah ke bagian ini',go:()=>{ const el=document.querySelector(a.getAttribute('href')); if(el) el.scrollIntoView({behavior:'smooth'}); }}));
+    return out; }
+  function draw(){ const q=inp.value.trim(); if(!q){ box.hidden=true; inp.setAttribute('aria-expanded','false'); return; }
+    res=search(q); const ql=q.toLowerCase(); let g='';
+    box.innerHTML=res.length?res.map((r,i)=>{ const head=r.g!==g?`<div class="gs-g">${(g=r.g)}</div>`:''; return head+`<button type="button" role="option" class="gs-i${i===sel?' on':''}" data-i="${i}"><b>${hl(r.t,ql)}</b>${r.tag?`<span class="gs-tag">${esc(r.tag)}</span>`:''}<small>${hl(r.d,ql)}</small></button>`; }).join(''):`<div class="gs-empty">${D?'Tidak ada PO, item, atau menu yang cocok dengan "'+esc(q)+'".':'Data belum dimuat.'}</div>`;
+    box.hidden=false; inp.setAttribute('aria-expanded','true');
+    box.querySelectorAll('[data-i]').forEach(b=>{ b.onmousedown=e=>e.preventDefault(); b.onclick=()=>pick(+b.dataset.i); }); }
+  function pick(i){ const r=res[i]; if(!r) return; box.hidden=true; inp.blur(); r.go(); }
+  inp.addEventListener('input',()=>{ sel=0; draw(); });
+  inp.addEventListener('focus',()=>{ if(inp.value.trim()) draw(); });
+  inp.addEventListener('blur',()=>setTimeout(()=>{ box.hidden=true; inp.setAttribute('aria-expanded','false'); },120));
+  inp.addEventListener('keydown',e=>{ if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); if(!res.length) return; sel=(sel+(e.key==='ArrowDown'?1:-1)+res.length)%res.length; draw(); const el=box.querySelector('.gs-i.on'); if(el) el.scrollIntoView({block:'nearest'}); }
+    else if(e.key==='Enter'){ e.preventDefault(); pick(sel<0?0:sel); } else if(e.key==='Escape'){ inp.value=''; draw(); inp.blur(); } });
+  document.addEventListener('keydown',e=>{ if((e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k')){ if(document.querySelector('.dlg:not([hidden])')) return; e.preventDefault(); inp.focus(); inp.select(); } });
+})();
 
 /* ======================= IMPOR FILE REKAP PO (format Target) ======================= */
 let IMP=null; // {file, lines:[{sheet,program,po,item,qty,cp,sw,desc}], pos:{po:{sw,n}}}
