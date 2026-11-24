@@ -529,6 +529,41 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
 .gs-tag{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:1px 8px;align-self:center}
 .gs-empty{padding:14px 12px;color:var(--muted);font-size:13px}
 @media (max-width:820px){.top-in.tabrow{flex-wrap:wrap}.gs{order:-1;flex:1 1 100%;margin-left:0}.gs kbd{display:none}}
+/* ===== Bulan ini ===== */
+.ld-delta{margin:10px 0 0;padding-top:9px;border-top:1px dashed var(--line);font-size:13px;color:var(--ink-2)}
+.ld-delta .dl-h{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 9px;margin-right:6px}
+.ld-delta b.l{color:var(--late)}.ld-delta b.g{color:var(--ok)}.ld-delta small{color:var(--ink-3)}
+.now-wrap{margin:14px 0 0}
+.now-g{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr) minmax(0,1.1fr);gap:14px}
+.now-p{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px;box-shadow:var(--sh1,0 1px 3px rgba(18,38,96,.06));min-width:0}
+.now-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.now-h h3{font-size:15.5px;margin:0}.now-h span{font-size:12px;color:var(--ink-3)}
+.now-gauge{display:block;width:100%;max-width:280px;margin:2px auto 0}
+.now-gv{font-size:30px;font-weight:800;fill:var(--ink)}.now-gs{font-size:9.5px;fill:var(--ink-3)}
+.now-leg{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;font-size:11.5px;color:var(--ink-2)}
+.now-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}.now-leg i.ln{height:3px;width:12px;background:var(--ink);vertical-align:2px}
+.now-kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:12px 0 0;padding-top:10px;border-top:1px solid var(--line-soft);font-size:12.5px}
+.now-kv dt{color:var(--ink-2)}.now-kv dd{margin:0;text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.now-kv dd small{color:var(--ink-3);font-family:inherit}
+.now-kv dd.hl{color:var(--warn);font-weight:700}
+.now-top{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:8px}
+.now-top li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:5px 6px;margin:0 -6px;border-radius:9px}
+.now-top .rk{font-weight:800;color:var(--ink-3);font-size:15px}
+.now-top .po{font-weight:700;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.now-top .po small{font-family:var(--f-body,inherit);font-weight:400;color:var(--ink-3);margin-left:6px;font-size:11.5px}
+.now-top .rem{font-size:12.5px;text-align:right}
+.now-top .bar2{grid-column:2;height:6px;border-radius:3px;background:var(--line-soft);overflow:hidden}.now-top .bar2 i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2,#5b8cff))}
+.now-top .due{grid-column:3;font-size:11px;text-align:right;white-space:nowrap;color:var(--ink-3)}
+.now-top .due.late{color:var(--late);font-weight:700}.now-top .due.soon{color:var(--warn);font-weight:700}
+.now-cu{display:grid;gap:8px;margin-top:4px}
+.now-cu .cu{display:grid;grid-template-columns:minmax(110px,1fr) minmax(0,1.4fr) 80px 40px;gap:10px;align-items:center;font-size:13px;padding:5px 6px;margin:0 -6px;border-radius:9px}
+.now-cu .cn{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.now-cu .cn small{display:block;font-weight:400;font-size:11px;color:var(--ink-3)}
+.now-cu .cn b.l{color:var(--late)}.now-cu .cn b.s{color:var(--warn)}
+.now-cu .cb{height:8px;border-radius:4px;background:var(--line-soft);overflow:hidden}.now-cu .cb i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--ok),#3cc48a)}
+.now-cu b.num{text-align:right;font-size:12.5px;font-weight:600}.now-cu .cp{text-align:right;color:var(--ink-3);font-size:12px}
+.now-note{margin:10px 0 0}
+.now-p .clk{cursor:pointer;transition:background .15s}.now-p .clk:hover{background:var(--accent-soft)}.now-p .clk:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+@media (max-width:1100px){.now-g{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.now-g #nowC{grid-column:1 / -1}}
+@media (max-width:680px){.now-g{grid-template-columns:minmax(0,1fr)}.now-cu .cu{grid-template-columns:minmax(0,1fr) 72px 36px}.now-cu .cb{grid-column:1 / -1;grid-row:2}}
 
 </style>
 </head>
@@ -549,7 +584,10 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
 </header>
 <div class="hero"><div class="hero-in" id="hero"></div></div>
 <div class="wrap">
-  <section class="lede" id="ringkasan" aria-label="Briefing"><div class="ld-h"><span class="ld-dot"></span>Briefing produksi folding<span class="ld-per" id="ldPer"></span></div><p class="ld-t" id="lede">Memuat data dari Google Sheet…</p></section>
+  <section class="lede" id="ringkasan" aria-label="Briefing"><div class="ld-h"><span class="ld-dot"></span>Briefing produksi folding<span class="ld-per" id="ldPer"></span></div><p class="ld-t" id="lede">Memuat data dari Google Sheet…</p><p class="ld-delta" id="ldDelta" hidden></p></section>
+  <section class="now-wrap" id="bulanini" aria-label="Bulan ini"><div class="now-g">
+    <div class="now-p" id="nowG"></div><div class="now-p" id="nowT"></div><div class="now-p" id="nowC"></div>
+  </div></section>
 
 
 
@@ -930,6 +968,51 @@ function poSummary(rows,P){
   }).filter(Boolean);
 }
 
+/* ======================= BULAN INI + PERUBAHAN ======================= */
+function renderNow(){ if(!D||!SIM) return; const P=ST.params, today=new Date(); today.setHours(0,0,0,0);
+  const y=today.getFullYear(), mo=today.getMonth(), mS=new Date(y,mo,1), mE=new Date(y,mo+1,0), iso=d=>isoDate(d.getTime());
+  const MN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const pola=ST.pola.find(p=>p.name===P.kondisi)||ST.pola[0]||{days:[true,true,true,true,true,false,false]}, hol=new Set(ST.holidays.map(h=>h.date));
+  let wdDone=0, wdLeft=0; for(let d=new Date(mS);d<=mE;d.setDate(d.getDate()+1)){ if(!pola.days[(d.getDay()+6)%7]||hol.has(iso(d))) continue; if(d<today) wdDone++; else wdLeft++; }
+  const ms=iso(mS), me=iso(mE), td=iso(today);
+  const outM=Object.entries(D.daily||{}).filter(([d])=>d>=ms&&d<=td).reduce((a,[,q])=>a+q,0);
+  const due=D.recap.filter(r=>!isTamp(r)&&r.sisa>0&&r.sw&&r.sw<=me), sisaDue=due.reduce((a,r)=>a+r.sisa,0), over=due.filter(r=>r.sw<td);
+  const tgt=outM+sisaDue, pct=tgt?outM/tgt:1, pace=(wdDone+wdLeft)?wdDone/(wdDone+wdLeft):1;
+  const avg=wdDone?outM/wdDone:0, need=wdLeft?sisaDue/wdLeft:sisaDue;
+  const endM=mE.getTime()+DAY, late=SIM.rows.filter(r=>r.q.sisa>0&&r.sw&&r.sw<endM&&r.end>endM);
+  const col=pct>=pace-0.02?'var(--ok)':pct>=pace-0.12?'var(--warn)':'var(--late)';
+  const A=(f)=>{ const a=Math.PI*(1-f); return [100+80*Math.cos(a),100-80*Math.sin(a)]; }, [ex,ey]=A(Math.min(pct,1)), [px,py]=A(Math.min(pace,1));
+  $('nowG').innerHTML=`<div class="now-h"><h3>Output ${MN[mo]} ${y}</h3><span>${wdLeft} hari kerja tersisa</span></div>
+    <svg class="now-gauge" viewBox="0 0 200 128" role="img" aria-label="Progres output bulan ini ${Math.round(pct*100)} persen"><path d="M20 100A80 80 0 0 1 180 100" fill="none" stroke="var(--line)" stroke-width="16" stroke-linecap="round"/>${pct>0?`<path d="M20 100A80 80 0 0 1 ${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="${col}" stroke-width="16" stroke-linecap="round"/>`:''}<line x1="${(100+(px-100)*0.78).toFixed(1)}" y1="${(100+(py-100)*0.78).toFixed(1)}" x2="${(100+(px-100)*1.14).toFixed(1)}" y2="${(100+(py-100)*1.14).toFixed(1)}" stroke="var(--ink)" stroke-width="2.5"/><text x="100" y="90" text-anchor="middle" class="now-gv">${Math.round(pct*100)}%</text><text x="100" y="124" text-anchor="middle" class="now-gs">dari yang harus selesai bulan ini</text></svg>
+    <div class="now-leg"><span><i style="background:${col}"></i>Output aktual</span><span><i class="ln"></i>Laju seharusnya (${Math.round(pace*100)}% hari kerja lewat)</span></div>
+    <dl class="now-kv"><dt>Output s.d. hari ini</dt><dd>${nf.format(outM)} pack</dd><dt>Sisa PO ber-SW ≤ ${fD(mE.getTime())}</dt><dd>${nf.format(sisaDue)} pack${over.length?` <small>(${over.length} baris lewat SW)</small>`:''}</dd>
+    <dt>Rata-rata per hari kerja</dt><dd>${nf.format(Math.round(avg))}</dd><dt>Perlu per hari kerja</dt><dd class="${need>avg*1.05&&avg?'hl':''}">${nf.format(Math.round(need))}</dd>
+    <dt>Menurut jadwal</dt><dd>${late.length?`<span class="pill late">${late.length} baris selesai lewat akhir bulan</span>`:'<span class="pill ok">Semua selesai bulan ini</span>'}</dd></dl>`;
+  const s=stats(SIM,P), top=s.os.slice().sort((a,b)=>(a.gap??1e9)-(b.gap??1e9)).slice(0,5);
+  $('nowT').innerHTML=`<div class="now-h"><h3>5 PO paling mendesak</h3><span>gap tersempit ke SW</span></div><ol class="now-top">`+(top.map((p,i)=>`<li class="clk" data-po="${esc(p.po)}" tabindex="0" role="button"><span class="rk">${i+1}</span><span class="po">${esc(p.po)}<small>${esc(p.cust)} · ${p.items} item</small></span><span class="rem num">${nf.format(p.sisa)}</span><span class="bar2"><i style="width:${Math.round(p.prog*100)}%"></i></span><span class="due ${p.gap==null?'':p.gap<0?'late':p.gap<P.mepet?'soon':'ok'}">${p.gap==null?'belum dijadwalkan':p.gap<0?`lewat SW ${nf1.format(-p.gap)} hr`:p.gap<P.mepet?`mepet · SW ${fD(p.sw)}`:`SW ${fD(p.sw)}`}</span></li>`).join('')||'<li class="empty">Tidak ada PO outstanding.</li>')+'</ol>';
+  const cg={}; s.os.forEach(p=>{ const c=cg[p.cust]=cg[p.cust]||{cust:p.cust,n:0,qty:0,out:0,sisa:0,late:0,warn:0}; c.n++; c.qty+=p.qty; c.out+=p.out; c.sisa+=p.sisa; if(p.risk==='Terlambat') c.late++; else if(p.risk==='Mepet') c.warn++; });
+  const CL=Object.values(cg).sort((a,b)=>b.sisa-a.sisa);
+  $('nowC').innerHTML=`<div class="now-h"><h3>Progres per customer</h3><span>PO outstanding</span></div><div class="now-cu">`+(CL.map(c=>`<div class="cu clk" data-cu="${esc(c.cust)}" tabindex="0" role="button"><span class="cn">${esc(c.cust)}<small>${c.n} PO${c.late?` · <b class="l">${c.late} terlambat</b>`:''}${c.warn?` · <b class="s">${c.warn} mepet</b>`:''}</small></span><span class="cb"><i style="width:${c.qty?Math.round(c.out/c.qty*100):0}%"></i></span><b class="num">${nf.format(c.sisa)}</b><span class="cp">${c.qty?Math.round(c.out/c.qty*100):0}%</span></div>`).join('')||'<p class="mini">Tidak ada PO outstanding.</p>')+'</div><p class="mini now-note">Angka = sisa pack · persen = output ÷ qty PO outstanding. Klik untuk menyaring PO & Status.</p>';
+  const go=(el,fn)=>{ el.onclick=fn; el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(); } }; };
+  $('nowT').querySelectorAll('[data-po]').forEach(el=>go(el,()=>openPD(el.dataset.po)));
+  $('nowC').querySelectorAll('[data-cu]').forEach(el=>go(el,()=>{ const c=$('poCust'); c.value=el.dataset.cu; c.dispatchEvent(new Event('change')); $('po').scrollIntoView({behavior:'smooth'}); }));
+  renderDelta(); }
+function renderDelta(){ const el=$('ldDelta'); if(!BASE){ el.hidden=true; return; }
+  const b=stats(BASE,ORIG?ORIG.params:ST.params), rc=D.recap.filter(r=>!isTamp(r));
+  const cur={out:rc.reduce((a,r)=>a+(r.output||0),0),sisa:rc.reduce((a,r)=>a+(r.sisa||0),0),os:b.os.length,late:b.late,warn:b.warn,fin:b.fin};
+  cur.sig=[cur.out,cur.sisa,cur.os,cur.late,cur.warn,Math.round(cur.fin/60000)].join('|');
+  let st=null; try{ st=JSON.parse(localStorage.getItem('pcbf_delta')||'null'); }catch(e){}
+  if(!st||!st.cur||st.cur.sig!==cur.sig){ st={cur:Object.assign({at:Date.now()},cur),prev:st&&st.cur||null}; try{ localStorage.setItem('pcbf_delta',JSON.stringify(st)); }catch(e){} }
+  const p=st.prev; if(!p){ el.hidden=true; return; }
+  const parts=[], dOut=cur.out-p.out, dS=cur.sisa-p.sisa, dF=(cur.fin-p.fin)/HOUR;
+  if(dOut) parts.push(`output ${dOut>0?'+':''}${nf.format(dOut)} pack`);
+  if(dS) parts.push(`sisa ${dS>0?'+':'−'}${nf.format(Math.abs(dS))} pack`);
+  if(cur.os!==p.os) parts.push(`PO outstanding ${p.os} → ${cur.os}`);
+  if(cur.late!==p.late) parts.push(`<b class="${cur.late>p.late?'l':'g'}">PO terlambat ${p.late} → ${cur.late}</b>`);
+  if(cur.warn!==p.warn) parts.push(`PO mepet ${p.warn} → ${cur.warn}`);
+  if(Math.abs(dF)>=0.5) parts.push(`folding selesai ${dF<0?'maju':'mundur'} ${fH(Math.abs(dF))}`);
+  el.innerHTML=`<span class="dl-h">Berubah sejak data sebelumnya</span>${parts.length?parts.join(' · '):'tidak ada perubahan angka utama'} <small>(dibandingkan data yang dilihat di browser ini ${fDT(p.at)})</small>`; el.hidden=false; }
+
 /* ======================= PARAMETER (RAIL) ======================= */
 function diffInfo(){
   const a=ORIG,b=ST,out=[];
@@ -1002,7 +1085,7 @@ function update(){
   const diffs=diffInfo();
   $('chgCount').textContent=diffs.length?diffs.length+' perubahan':'Sesuai Sheet'; $('chgCount').className='xl'+(diffs.length?' changed':'');
   $('scen').textContent=diffs.length?'Skenario simulasi':'Sesuai Sheet'; $('liveDot').className='live'+(diffs.length?' chg':'');
-  renderHero(); renderKpis(); renderLede(diffs); renderQueue(); renderPO(); renderTBA(); renderRQ(); renderCap(); renderDaily(); renderRules();
+  renderHero(); renderKpis(); renderLede(diffs); renderNow(); renderQueue(); renderPO(); renderTBA(); renderRQ(); renderCap(); renderDaily(); renderRules();
 }
 function stats(sim,P){ const pos=poSummary(sim.rows,P), os=pos.filter(p=>p.status!=='CLOSED');
   return {pos,os,late:os.filter(p=>p.risk==='Terlambat').length,warn:os.filter(p=>p.risk==='Mepet').length,fin:Math.max(0,...sim.rows.filter(r=>r.q.sisa>0).map(r=>r.end))}; }
