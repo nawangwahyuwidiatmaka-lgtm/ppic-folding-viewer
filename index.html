@@ -733,6 +733,13 @@ body.rail-off .rail-open{top:auto!important;bottom:18px;transform:none!important
 body.rail-off .rail-open span{writing-mode:horizontal-tb!important;transform:none!important}
 body.rail-off .rail-open:hover{padding-left:14px!important}
 @media print{.rail-open{display:none!important}}
+#qTbl col.c-time{width:232px}
+#qTbl td.qt1{white-space:nowrap;display:table-cell}
+#qTbl td.qt1 b{color:var(--muted);font-weight:600;margin:0 2px}
+@container (max-width:1100px){#qTbl td.qt1{white-space:normal}}
+@media (max-width:1200px){#qTbl col.c-time{width:150px}#qTbl td.qt1{white-space:normal}}
+#qTbl col.c-time{width:256px}#qTbl td.qt1{padding-right:14px}
+@media (max-width:1200px){#qTbl col.c-time{width:150px}}
 
 </style>
 </head>
@@ -1451,7 +1458,7 @@ function renderQueue(){
     <td class="ord"><b>${esc(q.po)}</b><div class="c">${esc(q.item)} · ${esc((q.program||'').replace(/^D53\s*/,''))}</div></td><td class="r num">${nf.format(q.sisa)}<div class="src">${(()=>{ const rr=D.recap.find(x=>x.po===q.po&&x.item===q.item); return rr&&rr.nilai?fRp(rr.nilai):'–'; })()}</div></td>
     ${ed?`<td class="c-ed"><select class="${ch('pola')}" data-q="${i}" data-k="pola">${polaOpts(q.pola,'(ikut)')}</select></td>
     <td class="c-ed"><div class="ovr"><input type="number" class="${ch('mp')}" data-q="${i}" data-k="mp" value="${q.mp??''}" placeholder="${r.mp}" title="MP (orang)" aria-label="MP"><input type="number" class="${ch('eff')}" data-q="${i}" data-k="eff" value="${q.eff==null?'':Math.round(q.eff*100)}" placeholder="${Math.round(r.eff*100)}" title="Efisiensi %" aria-label="Efisiensi %"><input type="number" step="0.1" class="${ch('setup')}" data-q="${i}" data-k="setup" value="${q.setup??''}" placeholder="${r.setup||0}" title="Setup (jam)" aria-label="Setup jam"></div></td>`:''}
-    <td class="r num">${nf1.format(r.dur)} j</td><td class="num qt"><span>${fDT(r.start)}</span><span>→ ${fDT(r.end)}</span></td>
+    <td class="r num">${nf1.format(r.dur)} j</td><td class="num qt qt1">${fDT(r.start)} <b>→</b> ${new Date(r.start).toDateString()===new Date(r.end).toDateString()?fDT(r.end).slice(-5):fDT(r.end)}</td>
     <td class="num" style="font-size:11.5px">${r.sw?fD(r.sw):'–'}</td><td class="r num">${r.gap==null?'–':nf1.format(r.gap)}</td><td>${pill(r.status)}<div class="src">${esc(r.src)}</div></td></tr>`; }).join('')+'</tbody>';
   $('qTbl').querySelectorAll('[data-q]').forEach(el=>el.onchange=()=>{ const q=ST.queue[+el.dataset.q], k=el.dataset.k;
     if(k==='pola') q.pola=el.value; else if(k==='eff') q.eff=el.value===''?null:(+el.value)/100; else q[k]=el.value===''?null:+el.value; update(); qDirty(); });
