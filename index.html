@@ -2197,8 +2197,8 @@ function watchPublic(){
 let LAST_FEED=null;
 async function publishFeed(json){
   if(ROLE!=='owner'||!LIVE||!MCP||IDS['Viewer_Feed']==null||json===LAST_FEED) return;
-  const CH=45000, parts=[]; for(let i=0;i<json.length;i+=CH) parts.push(json.slice(i,i+CH)); if(parts.length>37) return;
-  const rows=[['v1|'+Date.now()+'|'+parts.length]].concat(parts.map(x=>[x])); while(rows.length<38) rows.push(['']);
+  const CH=45000, parts=[]; for(let i=0;i<json.length;i+=CH) parts.push(json.slice(i,i+CH)); if(parts.length>117){ toast('Data terlalu besar untuk feed viewer.',true); return; }
+  const rows=[['v1|'+Date.now()+'|'+parts.length]].concat(parts.map(x=>[x])); while(rows.length<118) rows.push(['']);
   try{ await write([{updateCells:{start:{sheetId:IDS['Viewer_Feed'],rowIndex:1,columnIndex:0},rows:rows.map(r=>({values:[r[0]===''?{}:{userEnteredValue:{stringValue:r[0]}}]})),fields:'userEnteredValue'}}]); LAST_FEED=json; }
   catch(e){ console.warn('feed viewer gagal ditulis',e); }
 }
