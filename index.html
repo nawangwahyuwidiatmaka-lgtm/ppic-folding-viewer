@@ -564,6 +564,26 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
 .now-p .clk{cursor:pointer;transition:background .15s}.now-p .clk:hover{background:var(--accent-soft)}.now-p .clk:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 @media (max-width:1100px){.now-g{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.now-g #nowC{grid-column:1 / -1}}
 @media (max-width:680px){.now-g{grid-template-columns:minmax(0,1fr)}.now-cu .cu{grid-template-columns:minmax(0,1fr) 72px 36px}.now-cu .cb{grid-column:1 / -1;grid-row:2}}
+/* ringkasan hasil filter PO */
+.po-sum{margin:0 16px 12px;border:1px solid var(--line-soft);border-radius:12px;background:linear-gradient(180deg,var(--accent-soft),var(--surface) 70%);padding:10px 12px 10px}
+.ps-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:12.5px;color:var(--ink-2);margin-bottom:8px}
+.ps-h b{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);background:var(--surface);border:1px solid var(--line-soft);border-radius:999px;padding:2px 9px}
+.ps-g{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.ps-g>div{background:var(--surface);border:1px solid var(--line-soft);border-radius:10px;padding:8px 12px;min-width:0}
+.ps-g>div.hl{border-color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.ps-g span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
+.ps-g>div>b{display:block;font-size:21px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-g b em{font-style:normal;font-size:12px;font-weight:600;color:var(--ink-3);margin-left:4px}
+.ps-g small{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.ps-g small b{color:var(--ink)}
+.ps-g small .pbar{display:inline-block;width:46px;vertical-align:1px;margin:0}
+.ps-r{display:flex!important;flex-wrap:wrap;gap:4px;font-size:12px!important;padding-top:3px}
+.ps-r i{font-style:normal;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--surface-2);color:var(--ink-2)}
+.ps-r i.r-l{background:var(--late-soft);color:var(--late)}.ps-r i.r-m{background:var(--warn-soft);color:var(--warn)}.ps-r i.r-a{background:var(--ok-soft);color:var(--ok)}
+.ps-f{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ps-f span{font-size:12px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-soft);border-radius:999px;padding:3px 10px}
+@media (max-width:1200px){.ps-g{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.ps-g{grid-template-columns:repeat(2,minmax(0,1fr))}.po-sum{margin-inline:10px}.ps-g>div>b{font-size:18px}}
 
 </style>
 </head>
@@ -628,6 +648,7 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
           <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg></span><div><h2>PO &amp; status</h2><p>Ringkasan per PO hasil simulasi. Klik baris untuk melihat detail item<span class="ed-only">, lalu Ubah PO untuk mengoreksi data</span>. PO TBA ada di bagian Tampungan TBA.</p></div></div>
           <div class="toolbar flt"><select id="poMonth" title="Bulan SW"><option value="">Semua bulan SW</option></select><select id="poCust" title="Customer"><option value="">Semua customer</option></select><select id="poStat" title="Status"><option value="OPEN" selected>Belum closed (on progress + belum produksi)</option><option value="">Semua status</option><option>BELUM PRODUKSI</option><option>ON PROGRESS</option><option>CLOSED</option></select><select id="poFilter" title="Risiko"><option value="">Semua risiko</option><option>Terlambat</option><option>Mepet</option><option>Aman</option><option>Selesai</option></select><input id="poSearch" placeholder="Cari PO / customer / item (DPCI)" style="width:230px"><button type="button" class="btn sm sec" id="poClr" hidden>Reset filter</button></div>
         </div>
+        <div class="po-sum" id="poSum"></div>
         <div class="tw"><table id="poTbl"></table></div>
       </section>
 
@@ -1190,7 +1211,8 @@ function renderPO(){
   const qs=q?q.split(/[\s,]+/).filter(Boolean):[];
   const hit=p=>!qs.length||qs.every(w=>(p.po+' '+p.cust).toLowerCase().includes(w)||D.recap.some(r=>r.po===p.po&&(r.item+' '+r.program).toLowerCase().includes(w)));
   const list=pos.filter(p=>(!f||p.risk===f)&&(!mo||mk(p.sw)===$('poMonth').value)&&(!cu||p.cust===$('poCust').value)&&(!stt||(stt==='OPEN'?p.status!=='CLOSED':p.status===stt))&&hit(p));
-  $('poClr').hidden=!(f||q||$('poMonth').value||$('poCust').value||stt);
+  $('poClr').hidden=!(f||q||$('poMonth').value||$('poCust').value||stt!=='OPEN');
+  renderPoSum(list,{f,q,mo,cu,stt});
   const pend=new Set(PEND_PO);
   $('poTbl').innerHTML=`<thead><tr><th>PO</th><th>SW</th><th class="r">Item</th><th class="r">Qty</th><th class="r">Sisa</th><th>Progress</th><th>Status</th><th>Rencana selesai</th><th class="r">Gap (hari)</th><th class="r">Nilai sisa</th><th>Risiko</th></tr></thead><tbody>`+
   list.map(p=>{ const b=bMap[p.po]; const moved=b&&b.risk!==p.risk;
@@ -1198,6 +1220,29 @@ function renderPO(){
     <td><span class="pbar"><i style="width:${Math.round(p.prog*100)}%"></i></span><span class="num" style="font-size:12px">${Math.round(p.prog*100)}%</span></td><td>${pill(p.status)}</td><td class="num" style="font-size:12px">${p.end?fDT(p.end):'–'}</td>
     <td class="r num">${p.gap==null?'–':nf1.format(p.gap)}</td><td class="r num">${fRp(p.nilai)}</td><td>${pill(p.risk)}${moved?`<div class="src">Sheet: ${esc(b.risk)}</div>`:''}</td></tr>`; }).join('')+'</tbody>';
   $('poTbl').querySelectorAll('tr[data-po]').forEach(tr=>tr.onclick=()=>openPD(tr.dataset.po));
+}
+function renderPoSum(list,F){
+  const set=new Set(list.map(p=>p.po)), rs=D.recap.filter(r=>set.has(r.po)&&!isTamp(r));
+  const qty=rs.reduce((a,r)=>a+r.qty,0), out=rs.reduce((a,r)=>a+(r.output||0),0), sisa=rs.reduce((a,r)=>a+(r.sisa||0),0);
+  const vQty=rs.reduce((a,r)=>a+r.qty*(r.harga||0),0), vOut=rs.reduce((a,r)=>a+(r.output||0)*(r.harga||0),0), vSisa=rs.reduce((a,r)=>a+(r.nilai||0),0);
+  const noPrice=rs.filter(r=>r.sisa>0&&!r.harga).length;
+  const rows=SIM.rows.filter(r=>set.has(r.q.po)&&r.q.sisa>0), jam=rows.reduce((a,r)=>a+r.dur,0), fin=rows.length?Math.max(...rows.map(r=>r.end)):null;
+  const cnt=k=>list.filter(p=>p.risk===k).length, op=list.filter(p=>p.status==='ON PROGRESS').length, bp=list.filter(p=>p.status==='BELUM PRODUKSI').length, cl=list.filter(p=>p.status==='CLOSED').length;
+  const custs={}; list.forEach(p=>custs[p.cust]=(custs[p.cust]||0)+p.sisa); const ct=Object.entries(custs).sort((a,b)=>b[1]-a[1]);
+  const near=list.filter(p=>p.sisa>0&&p.sw).sort((a,b)=>a.sw-b.sw)[0], worst=list.filter(p=>p.gap!=null&&p.sisa>0).sort((a,b)=>a.gap-b.gap)[0];
+  const pr=qty?out/qty:0;
+  const lab=[F.stt==='OPEN'?'PO belum closed':F.stt||'Semua status',F.cu,F.mo?BLN[+F.mo.slice(5)-1]+' '+F.mo.slice(0,4):'',F.f,F.q?'"'+F.q+'"':''].filter(Boolean).join(' · ');
+  if(!list.length){ $('poSum').innerHTML=`<div class="ps-h"><b>Hasil filter</b> ${esc(lab)} · tidak ada PO</div>`; return; }
+  $('poSum').innerHTML=`<div class="ps-h"><b>Hasil filter</b><span>${esc(lab)}</span></div>
+  <div class="ps-g">
+    <div><span>PO</span><b>${list.length}</b><small>${list.reduce((a,p)=>a+p.items,0)} item · ${ct.length} customer</small></div>
+    <div><span>Qty order</span><b>${nf.format(qty)}<em>pack</em></b><small>${fRp(vQty)}</small></div>
+    <div><span>Sudah output</span><b>${nf.format(out)}<em>pack</em></b><small><span class="pbar"><i style="width:${Math.round(pr*100)}%"></i></span> ${Math.round(pr*100)}% · ${fRp(vOut)}</small></div>
+    <div class="hl"><span>Sisa</span><b>${nf.format(sisa)}<em>pack</em></b><small>nilai sisa <b>${fRp(vSisa)}</b>${noPrice?` · ${noPrice} item tanpa harga`:''}</small></div>
+    <div><span>Jam kerja dibutuhkan</span><b>${nf1.format(jam)}<em>jam</em></b><small>${fin?'selesai '+fDT(fin):'tidak ada sisa'}</small></div>
+    <div><span>Risiko</span><b class="ps-r">${cnt('Terlambat')?`<i class="r-l">${cnt('Terlambat')} terlambat</i>`:''}${cnt('Mepet')?`<i class="r-m">${cnt('Mepet')} mepet</i>`:''}${cnt('Aman')?`<i class="r-a">${cnt('Aman')} aman</i>`:''}${cnt('Belum dijadwalkan')?`<i>${cnt('Belum dijadwalkan')} belum dijadwal</i>`:''}${!list.some(p=>p.sisa>0)?'<i class="r-a">semua selesai</i>':''}</b><small>${worst?`gap tersempit ${esc(worst.po)}: ${nf1.format(worst.gap)} hari`:'–'}</small></div>
+  </div>
+  <div class="ps-f">${[op?`<span>${op} on progress</span>`:'',bp?`<span>${bp} belum produksi</span>`:'',cl?`<span>${cl} closed</span>`:'',near?`<span>SW terdekat <b>${fD(near.sw)}</b> · ${esc(near.po)}</span>`:'',ct.length>1&&sisa?`<span>Sisa terbesar: <b>${esc(ct[0][0])}</b> ${Math.round(ct[0][1]/sisa*100)}%${ct[1]?` · ${esc(ct[1][0])} ${Math.round(ct[1][1]/sisa*100)}%`:''}</span>`:''].filter(Boolean).join('')}</div>`;
 }
 let PD=null, PEND_PO=[];
 function openPD(po){
