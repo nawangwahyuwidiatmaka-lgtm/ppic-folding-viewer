@@ -743,6 +743,9 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
 .hg-imp{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;margin:0 16px 12px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:12px;background:var(--accent-soft)}
 .hg-imp .field{margin:0}.hg-imp p{flex:1 1 260px;margin:0}
 #hgTbl .c-ck{width:30px}
+#kdDlg .po-m{width:min(1240px,96vw);max-width:min(1240px,96vw)}
+#kdTbl tfoot td{font-weight:700;background:var(--panel-2,#f3f5f9);border-top:2px solid var(--line);white-space:nowrap}
+#kdTbl td.num{white-space:nowrap}
 
 </style>
 </head>
@@ -1605,10 +1608,15 @@ function kdData(key){
   const gapTd=g=>g==null?'–':nf1.format(g), chip=(a,b)=>`<div><span>${a}</span><b>${b}</b></div>`;
   if(key.startsWith('item:')){ const it=key.slice(5), m=D.masterMap[it]||{}, L=D.recap.filter(r=>r.item===it).slice().sort((a,b)=>(a.sw||'9999').localeCompare(b.sw||'9999'));
     const sr=po=>SIM.rows.find(r=>r.q.po===po&&r.q.item===it), os=L.filter(r=>r.sisa>0&&!isTamp(r));
+    const hp=r=>r.harga||m.harga||0, vO=r=>(r.qty||0)*hp(r), vS=r=>r.nilai||(r.sisa||0)*hp(r);
+    const tQ=L.reduce((a,r)=>a+(r.qty||0),0), tO=L.reduce((a,r)=>a+(r.output||0),0), tS=L.reduce((a,r)=>a+(r.sisa||0),0), tVO=L.reduce((a,r)=>a+vO(r),0), tVS=L.reduce((a,r)=>a+vS(r),0);
+    let acc=0; const noP=L.some(r=>!hp(r));
     return {t:it,sub:(m.program||(L[0]||{}).program||'')+(m.packing?' · '+m.packing+' step '+m.step:''),
-      sum:chip('Sisa outstanding',nf.format(os.reduce((a,r)=>a+r.sisa,0))+' pack')+chip('PO outstanding',os.length)+chip('Target GC',nf1.format(m.tGC||0)+'/jam/MP')+chip('Harga',m.harga?fRp(m.harga):'–'),
-      h:['PO','Customer','SW','Qty','Output','Sisa','Status','Rencana selesai','Gap (hari)','Antrean'],
-      r:L.map(r=>{ const q=sr(r.po); return [`<b>${esc(r.po)}</b>`,esc(r.cust||''),r.sw?fD(parseDT(r.sw)):'–',r.qty?nf.format(r.qty):'–',nf.format(r.output||0),nf.format(r.sisa||0),esc(r.status||''),q&&q.q.sisa>0?fDT(q.end):'–',q&&q.q.sisa>0?gapTd(q.gap):'–',q&&q.q.sisa>0?'#'+q.no:'–']; }),
+      sum:chip('Sisa outstanding',nf.format(os.reduce((a,r)=>a+r.sisa,0))+' pack')+chip('PO outstanding',os.length)+chip('Target GC',nf1.format(m.tGC||0)+'/jam/MP')+chip('Harga',m.harga?fRp(m.harga):'–')+chip('Nilai order',fRp(tVO))+chip('Nilai sisa',fRp(tVS)),
+      h:['PO','Customer','SW','Qty','Output','Sisa','Nilai order','Nilai sisa','Akum. nilai sisa','Status','Rencana selesai','Gap (hari)','Antrean'],
+      r:L.map(r=>{ const q=sr(r.po), v=vS(r); acc+=v; return [`<b>${esc(r.po)}</b>`,esc(r.cust||''),r.sw?fD(parseDT(r.sw)):'–',r.qty?nf.format(r.qty):'–',nf.format(r.output||0),nf.format(r.sisa||0),hp(r)?fRp(vO(r)):'–',hp(r)?fRp(v):'–',hp(r)?`<b>${fRp(acc)}</b>`:'–',esc(r.status||''),q&&q.q.sisa>0?fDT(q.end):'–',q&&q.q.sisa>0?gapTd(q.gap):'–',q&&q.q.sisa>0?'#'+q.no:'–']; }),
+      foot:L.length>1?['Total '+L.length+' PO','','',nf.format(tQ),nf.format(tO),nf.format(tS),fRp(tVO),fRp(tVS),'','','','','']:null,
+      note:'Nilai = qty/sisa × harga per pack (harga SO; jika kosong, harga Master). Akumulasi dihitung berurutan dari SW terdekat.'+(noP?' Ada baris tanpa harga.':''),
       go:['antrean','Lihat di antrean',()=>{ const x=$('qSearch'); if(x){ x.value=it; x.dispatchEvent(new Event('input')); } }]}; }
   switch(key){
   case 'ontime': { const L=s.os.slice().sort((a,b)=>(a.gap??1e9)-(b.gap??1e9));
@@ -1650,8 +1658,8 @@ function kdData(key){
 function openKD(key){ if(!SIM||!D) return; const d=kdData(key); if(!d) return;
   $('kdT').textContent=d.t; $('kdSub').textContent=d.sub; $('kdSum').innerHTML=d.sum||''; $('kdSum').hidden=!d.sum;
   const numCol=i=>!['PO','#','Item','Tanggal','Bulan','SW'].includes(d.h[i])&&d.r.length&&d.r.every(row=>/^[\d.,\s%jRp–+-]*$/.test(String(row[i]).replace(/<[^>]+>/g,'').replace(/jt|M|jam| j/g,'')));
-  $('kdTbl').innerHTML=`<thead><tr>${d.h.map((h,i)=>`<th class="${numCol(i)?'r':''}">${h}</th>`).join('')}</tr></thead><tbody>`+(d.r.map(row=>`<tr>${row.map((c,i)=>`<td class="${numCol(i)?'r num':''}">${c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${d.h.length}" class="empty">Tidak ada data.</td></tr>`)+'</tbody>';
-  delete $('kdTbl').dataset.nosort; $('kdNote').textContent='Klik judul kolom untuk mengurutkan.'; delete SORT.kdTbl; applySort($('kdTbl'));
+  $('kdTbl').innerHTML=`<thead><tr>${d.h.map((h,i)=>`<th class="${numCol(i)?'r':''}">${h}</th>`).join('')}</tr></thead><tbody>`+(d.r.map(row=>`<tr>${row.map((c,i)=>`<td class="${numCol(i)?'r num':''}">${c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${d.h.length}" class="empty">Tidak ada data.</td></tr>`)+'</tbody>'+(d.foot?`<tfoot><tr>${d.foot.map((c,i)=>`<td class="${numCol(i)?'r num':''}">${c}</td>`).join('')}</tr></tfoot>`:'');
+  delete $('kdTbl').dataset.nosort; $('kdNote').textContent=(d.note?d.note+' ':'')+'Klik judul kolom untuk mengurutkan.'; delete SORT.kdTbl; applySort($('kdTbl'));
   const g=$('kdGo'); g.hidden=!d.go; if(d.go){ g.textContent=d.go[1]; g.onclick=()=>{ closeKD(); if(d.go[2]) d.go[2](); const el=document.getElementById(d.go[0]); if(el) el.scrollIntoView({behavior:'smooth'}); }; }
   $('kdDlg').hidden=false; $('kdNo').focus(); }
 function openQD(i){ const r=SIM&&SIM.rows[i]; if(!r) return; const chip=(a,b)=>`<div><span>${a}</span><b>${b}</b></div>`; const q=r.q, P=ST.params, m=D.masterMap[q.item]||{};
