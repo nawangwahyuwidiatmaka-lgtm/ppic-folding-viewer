@@ -686,6 +686,11 @@ body.rail-off .rail-open:hover{padding-left:9px}
 #kdlTbl .kd-ed{display:block;margin-top:6px;padding:4px 10px;font-size:12px}
 @media (max-width:760px){#kdlTbl{table-layout:auto;min-width:720px}}
 #kdlTbl td .pill{max-width:100%;box-sizing:border-box}
+.kd-bar{grid-template-columns:minmax(0,1.25fr) minmax(70px,1fr) auto!important;padding:5px 6px;margin:0 -6px 4px;border-radius:8px}
+.kd-bar.clk{cursor:pointer}.kd-bar.clk:hover{background:var(--accent-soft)}.kd-bar.clk:focus-visible{outline:2px solid var(--accent)}
+.kd-bar.clk em::after{content:" ›";color:var(--ink-3)}
+.kd-bar{grid-template-columns:minmax(0,1fr) minmax(90px,1.3fr) auto!important}
+.kd-bar i{background:var(--line)!important;height:9px!important}
 
 </style>
 </head>
@@ -1195,10 +1200,11 @@ function renderKendala(){ if(!D||!SIM) return; const ed=canEditUI();
   const tile=(l,v,sm,c)=>`<div class="${c||''}"><span>${l}</span><b>${v}</b><small>${sm}</small></div>`;
   $('kdKpi').innerHTML=tile('Item tertahan',`${blk.length}<em>/ ${L.length}</em>`,`${unf.length} item belum diberi keterangan`,'acc')+tile('PO terdampak',posB.size,`dari ${pos.size} PO pada daftar ini`)+tile('Qty tertahan',nf.format(sum(blk,x=>x.sisa))+'<em>pack</em>',`${nf1.format(sum(blk,x=>sum(SIM.rows.filter(r=>r.q.item===x.item&&r.q.sisa>0),r=>r.dur)))} jam kerja folding`)+tile('Nilai tertahan',fRp(sum(blk,x=>x.nilai)),'harga SO × sisa','acc')+tile('ETA lewat SW',late.length,(late.length?'item berisiko telat kirim':'tidak ada')+(ncL.length?` · ${ncL.length} belum ada komitmen kirim`:''),late.length||ncL.length?'bad':'')+tile('Jadwal sebelum ETA',early.length,early.length?'antrean mulai sebelum supply datang':'jadwal sudah realistis',early.length?'warn':'');
   // visual: per kategori + per customer + per SW month
-  const bars=(title,rows,tot)=>`<div class="kd-v"><h4>${title}</h4>${rows.length?rows.map(([n,v,s2])=>`<div class="kd-bar"><span>${esc(n)}</span><i><b style="width:${tot?Math.max(2,Math.round(v/tot*100)):0}%"></b></i><em>${fRp(v)}</em><small>${s2}</small></div>`).join(''):'<p class="mini">Belum ada data kendala.</p>'}</div>`;
+  const bars=(title,rows,tot,g)=>`<div class="kd-v"><h4>${title}</h4>${rows.length?rows.map(([n,v,s2])=>`<div class="kd-bar clk" role="button" tabindex="0" data-kdb="${g}" data-kdn="${esc(n)}" title="Klik untuk melihat item terdampak"><span>${esc(n)}</span><i><b style="width:${tot?Math.max(2,Math.round(v/tot*100)):0}%"></b></i><em>${fRp(v)}</em><small>${s2}</small></div>`).join(''):'<p class="mini">Belum ada data kendala.</p>'}</div>`;
   const totB=sum(blk,x=>x.nilai), byC={}, byM={};
   blk.forEach(x=>{ x.rows.forEach(r=>{ const v=r.nilai||0; byC[r.cust]=(byC[r.cust]||0)+v; const t=parseDT(r.sw), mk=t?BLN[new Date(t).getMonth()]+' '+new Date(t).getFullYear():'Tanpa SW'; byM[mk]=byM[mk]||{v:0,t:t||9e15}; byM[mk].v+=v; }); });
-  $('kdVis').innerHTML=bars('Nilai tertahan per kategori',TK.map(([k,t])=>[k,t.nilai,`${t.n} item · ${nf.format(t.sisa)} pack`]),totB)+bars('Per customer',Object.entries(byC).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[c,v,totB?Math.round(v/totB*100)+'%':'']),totB)+bars('Per bulan SW',Object.entries(byM).sort((a,b)=>a[1].t-b[1].t).map(([m,o])=>[m,o.v,totB?Math.round(o.v/totB*100)+'%':'']),totB);
+  $('kdVis').innerHTML=bars('Nilai tertahan per kategori',TK.map(([k,t])=>[k,t.nilai,`${t.n} item · ${nf.format(t.sisa)} pack`]),totB,'kat')+bars('Per customer',Object.entries(byC).sort((a,b)=>b[1]-a[1]).map(([c,v])=>[c,v,totB?Math.round(v/totB*100)+'%':'']),totB,'cust')+bars('Per bulan SW',Object.entries(byM).sort((a,b)=>a[1].t-b[1].t).map(([m,o])=>[m,o.v,totB?Math.round(o.v/totB*100)+'%':'']),totB,'mon');
+  $('kdVis').querySelectorAll('[data-kdb]').forEach(el=>{ const f=()=>kdDetail(el.dataset.kdb,el.dataset.kdn,blk); el.onclick=f; el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); f(); } }; });
   const stp=x=>!x.k?'<span class="pill na">Belum diisi</span>':x.open?`<span class="pill ${x.k.status==='Supply sebagian'||/approval/i.test(x.k.status)?'warn':'late'}">${esc(x.k.status)}</span>`:`<span class="pill ok">${esc(x.k.status)}</span>`;
   $('kdlTbl').innerHTML=`<thead><tr>${ed?'<th class="c-ck"><input type="checkbox" id="kdAll" aria-label="Pilih semua"></th>':''}<th class="k-it">Item / DPCI</th><th class="k-po">PO · customer</th><th class="k-sw">SW · rencana mulai</th><th class="r k-n">Sisa · nilai</th><th class="k-kd">Kendala</th><th class="k-eta">ETA supply · ke SW</th><th class="k-st">Status</th></tr></thead><tbody>`+
     (L.map(x=>`<tr class="${x.k&&x.open&&((x.etaGap!=null&&x.etaGap<0)||x.nc)?'kd-risk':''}">${ed?`<td class="c-ck"><input type="checkbox" data-ck="${esc(x.item)}" ${KDSEL.has(x.item)?'checked':''} aria-label="Pilih ${esc(x.item)}"></td>`:''}
@@ -1213,6 +1219,19 @@ function renderKendala(){ if(!D||!SIM) return; const ed=canEditUI();
   $('kdlTbl').querySelectorAll('[data-ck]').forEach(c=>c.onchange=()=>{ c.checked?KDSEL.add(c.dataset.ck):KDSEL.delete(c.dataset.ck); kdBulkUi(); });
   const all=$('kdAll'); if(all){ all.checked=L.length&&L.every(x=>KDSEL.has(x.item)); all.onchange=()=>{ L.forEach(x=>all.checked?KDSEL.add(x.item):KDSEL.delete(x.item)); renderKendala(); }; }
   kdBulkUi(); }
+function kdDetail(g,name,blk){
+  const mk=t=>{ const d=new Date(t); return BLN[d.getMonth()]+' '+d.getFullYear(); };
+  const rows=[]; blk.forEach(x=>x.rows.forEach(r=>{ const t=parseDT(r.sw); const ok=g==='kat'?(x.k.kat||'Lainnya')===name:g==='cust'?r.cust===name:(t?mk(t):'Tanpa SW')===name; if(ok) rows.push({x,r,t}); }));
+  rows.sort((a,b)=>(a.t||9e15)-(b.t||9e15)||b.r.nilai-a.r.nilai);
+  const items=new Set(rows.map(o=>o.x.item)), pos=new Set(rows.map(o=>o.r.po)), sisa=rows.reduce((a,o)=>a+o.r.sisa,0), nilai=rows.reduce((a,o)=>a+(o.r.nilai||0),0);
+  const chip=(a,b)=>`<div><span>${a}</span><b>${b}</b></div>`;
+  $('kdT').textContent=name; $('kdSub').textContent=(g==='kat'?'Kategori kendala':g==='cust'?'Customer':'Bulan SW')+' · item yang tertahan';
+  $('kdSum').innerHTML=chip('Item',items.size)+chip('PO',pos.size)+chip('Sisa',nf.format(sisa)+' pack')+chip('Nilai tertahan',fRp(nilai)); $('kdSum').hidden=false;
+  const eta=x=>x.nc?'<span class="pill late">Belum ada komitmen</span>':x.eta?fD(x.eta):'–';
+  $('kdTbl').innerHTML='<thead><tr><th>Item / DPCI</th><th>PO · customer</th><th>SW</th><th class="r">Sisa</th><th class="r">Nilai</th><th>Kendala · status</th><th>ETA supply</th></tr></thead><tbody>'+
+    rows.map(({x,r,t})=>`<tr><td><b class="num">${esc(x.item)}</b><div class="mini">${esc((x.m.program||x.program||'').replace(/^D53\s*/,''))}</div></td><td class="num">${esc(r.po)}<div class="mini">${esc(r.cust)}</div></td><td class="num">${t?fD(t):'–'}</td><td class="r num">${nf.format(r.sisa)}</td><td class="r num">${fRp(r.nilai||0)}</td><td style="white-space:normal">${esc(x.k.kat||'–')}${x.k.ket?`<div class="mini">${esc(x.k.ket)}</div>`:''}<div class="mini"><b>${esc(x.k.status)}</b></div></td><td>${eta(x)}</td></tr>`).join('')+'</tbody>';
+  delete $('kdTbl').dataset.nosort; delete SORT.kdTbl; $('kdNote').textContent='Klik judul kolom untuk mengurutkan.';
+  $('kdGo').hidden=true; $('kdDlg').hidden=false; $('kdNo').focus(); }
 function kdBulkUi(){ const n=KDSEL.size; $('kdBulk').hidden=!n||!canEditUI(); $('kdSel').textContent=n+' item dipilih'; }
 let KDED=null;
 function kdOpen(items){ KDED=items; const K=D.kendala||{}, k=items.length===1?K[items[0]]:null, base=k||items.map(i=>K[i]).find(Boolean)||null;
