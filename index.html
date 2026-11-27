@@ -740,6 +740,9 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
 @media (max-width:1200px){#qTbl col.c-time{width:150px}#qTbl td.qt1{white-space:normal}}
 #qTbl col.c-time{width:256px}#qTbl td.qt1{padding-right:14px}
 @media (max-width:1200px){#qTbl col.c-time{width:150px}}
+.hg-imp{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;margin:0 16px 12px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:12px;background:var(--accent-soft)}
+.hg-imp .field{margin:0}.hg-imp p{flex:1 1 260px;margin:0}
+#hgTbl .c-ck{width:30px}
 
 </style>
 </head>
@@ -755,7 +758,7 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
   </div>
   <div class="top-in tabrow">
     <div class="gs" id="gs" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="gsQ" type="search" placeholder="Cari PO, item / DPCI, program, customer…" autocomplete="off" aria-label="Cari di dashboard" aria-controls="gsList" aria-expanded="false"><kbd>/</kbd><div class="gs-list" id="gsList" role="listbox" hidden></div></div>
-    <nav class="tabs" id="snav" aria-label="Navigasi bagian"><a href="#ringkasan" class="on">Ringkasan</a><a href="#input">Input Output</a><a href="#po">PO &amp; Status</a><a href="#kendala">Kendala</a><a href="#antrean">Antrean</a><a href="#kapasitas">Loading</a><a href="#tba">TBA</a><a href="#orderbaru">Order Baru</a><a href="#aturan">Aturan</a></nav>
+    <nav class="tabs" id="snav" aria-label="Navigasi bagian"><a href="#ringkasan" class="on">Ringkasan</a><a href="#input">Input Output</a><a href="#po">PO &amp; Status</a><a href="#kendala">Kendala</a><a href="#harga">Harga</a><a href="#antrean">Antrean</a><a href="#kapasitas">Loading</a><a href="#tba">TBA</a><a href="#orderbaru">Order Baru</a><a href="#aturan">Aturan</a></nav>
   </div>
 </header>
 <div class="hero"><div class="hero-in" id="hero"></div></div>
@@ -819,6 +822,22 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
         <div class="kd-vis" id="kdVis"></div>
         <div class="kd-bulk" id="kdBulk" hidden><span id="kdSel"></span><button type="button" class="btn pri sm" id="kdBulkBtn">Isi kendala untuk item terpilih</button><button type="button" class="btn sm" id="kdBulkClr">Batal pilih</button></div>
         <div class="tw" style="max-height:640px"><table id="kdlTbl"></table></div>
+      </section>
+
+      <section class="card" id="harga">
+        <div class="card-h">
+          <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12l9-9h8v8l-9 9z"/><circle cx="16" cy="8" r="1.6"/></svg></span><div><h2>Item tanpa harga</h2><p>Baris order yang belum punya harga SO maupun harga Master_Item, sehingga nilainya belum ikut terhitung. Harga bisa diisi dari kolom FCA Cost (tersembunyi) di file rekap PO.</p></div></div>
+          <div class="toolbar"><select id="hgScope" aria-label="Cakupan"><option value="os">Masih ada sisa</option><option value="all">Semua baris</option></select><input id="hgQ" placeholder="Cari item / PO / program" style="width:180px"></div>
+        </div>
+        <div class="kd-kpi" id="hgKpi"></div>
+        <div class="hg-imp" id="hgImp" hidden>
+          <div class="field"><label for="hgFile">File rekap PO (Excel) untuk membaca FCA Cost</label><input type="file" id="hgFile" accept=".xlsx,.xlsm"></div>
+          <div class="field"><label for="hgRate">Kurs (Rp per USD)</label><input type="number" id="hgRate" step="1" style="width:130px"></div>
+          <p class="mini" id="hgInfo"></p>
+          <button type="button" class="btn pri" id="hgApply" disabled>Simpan harga terpilih ke Master_Item</button>
+        </div>
+        <div class="tw" style="max-height:620px"><table id="hgTbl"></table></div>
+        <p class="note" style="padding:0 16px 14px;margin:0">Harga estimasi = FCA Cost (USD/pack) × kurs. Kurs bawaan dihitung dari item yang sudah punya harga dan FCA Cost; bisa diubah sebelum disimpan. Disimpan ke kolom Harga/Pack Master_Item dengan sumber "FCA × kurs (estimasi)", lalu otomatis dipakai Recap_Order bila harga SO belum ada.</p>
       </section>
 
       <section class="card" id="antrean">
@@ -1108,7 +1127,7 @@ function parseGrid(g){
   const recap=[]; (g['Recap_Order']||[]).some((r,ri)=>{ if(!S_(r[1])) return true;
     recap.push({row:5+ri,hargaSO:N_(r[18]),cust:S_(r[0]),po:S_(r[1]),item:S_(r[2]),program:S_(r[3]),sw:D_(r[4]),cp:N_(r[5]),qty:N_(r[6])||0,packing:S_(r[7]),output:N_(r[11])||0,sisa:N_(r[12])||0,status:S_(r[17]),harga:N_(r[19])||0,nilai:N_(r[20])||0}); return false; });
   const master=[], packings=[]; const M=g['Master_Item']||[];
-  M.some(r=>{ if(!S_(r[0])) return true; master.push({item:S_(r[0]),program:S_(r[1]),material:S_(r[2]),ct:N_(r[3]),step:r[4],packing:S_(r[5]),lini:S_(r[6]),tProd:N_(r[7]),tGC:N_(r[8]),harga:N_(r[9]),cek:S_(r[11])}); return false; });
+  M.some((r,mi)=>{ if(!S_(r[0])) return true; master.push({row:5+mi,src:S_(r[10]),item:S_(r[0]),program:S_(r[1]),material:S_(r[2]),ct:N_(r[3]),step:r[4],packing:S_(r[5]),lini:S_(r[6]),tProd:N_(r[7]),tGC:N_(r[8]),harga:N_(r[9]),cek:S_(r[11])}); return false; });
   const std={}; M.forEach(r=>{ if(S_(r[14])){ packings.push(S_(r[13])+'|'+S_(r[14])); std[S_(r[13])+'|'+S_(r[14])]=[N_(r[16]),N_(r[17])]; } });
   const kendala={}; let kdLast=4; (g['Kendala_Item']||[]).forEach((r,i)=>{ const it=S_(r[0]); if(!it) return; kdLast=5+i; kendala[it]={row:5+i,item:it,kat:S_(r[1]),ket:S_(r[2]),eta:typeof r[3]==='number'?D_(r[3]):'',nc:typeof r[3]==='string'&&/komitmen/i.test(r[3]),pic:S_(r[4]),status:S_(r[5])||'Menunggu supply',at:typeof r[6]==='number'?DT_(r[6]):'',by:S_(r[7])}; });
   const logs=[], daily={}; const L=(g['Log_Output']||[]); let lastLog=-1;
@@ -1374,7 +1393,7 @@ function update(){
   const diffs=diffInfo();
   $('chgCount').textContent=diffs.length?diffs.length+' perubahan':'Sesuai Sheet'; $('chgCount').className='xl'+(diffs.length?' changed':'');
   $('scen').textContent=diffs.length?'Skenario simulasi':'Sesuai Sheet'; $('liveDot').className='live'+(diffs.length?' chg':'');
-  renderHero(); renderKpis(); renderLede(diffs); renderNow(); renderQueue(); renderPO(); renderKendala(); renderTBA(); renderRQ(); renderCap(); renderDaily(); renderRules();
+  renderHero(); renderKpis(); renderLede(diffs); renderNow(); renderQueue(); renderPO(); renderKendala(); renderHarga(); renderTBA(); renderRQ(); renderCap(); renderDaily(); renderRules();
 }
 function stats(sim,P){ const pos=poSummary(sim.rows,P), os=pos.filter(p=>p.status!=='CLOSED');
   return {pos,os,late:os.filter(p=>p.risk==='Terlambat').length,warn:os.filter(p=>p.risk==='Mepet').length,fin:Math.max(0,...sim.rows.filter(r=>r.q.sisa>0).map(r=>r.end))}; }
@@ -2272,7 +2291,7 @@ function startQLog(){
     PEND_EDITS=rows.filter(r=>r.type==='editlog'&&r.status==='pending').map(r=>{ try{ return JSON.parse(r.payload).row; }catch(e){ return null; } }).filter(Boolean); if(D) renderLogs();
     const names={}; if(USER){ try{ const ids=[...new Set(rows.map(r=>r.by).filter(Boolean))]; const ps=ids.length?await USER.profiles(ids):{}; ids.forEach(i=>names[i]=(ps[i]&&ps[i].name)||'Editor'); }catch(e){} }
     const st={pending:'<span class="pill warn">Menunggu sinkron</span>',done:'<span class="pill ok">Masuk Sheet</span>',error:'<span class="pill late">Gagal</span>'};
-    const tp={output:'Output',order:'Order baru',scenario:'Skenario',baseline:'Baseline',editlog:'Ubah output',editpo:'Ubah PO',alokasi:'Alokasi TBA',rulereq:'Permintaan aturan',orderbatch:'Impor PO',kendala:'Kendala item',qorder:'Urutan antrean'};
+    const tp={output:'Output',order:'Order baru',scenario:'Skenario',baseline:'Baseline',editlog:'Ubah output',editpo:'Ubah PO',alokasi:'Alokasi TBA',rulereq:'Permintaan aturan',orderbatch:'Impor PO',harga:'Harga item',kendala:'Kendala item',qorder:'Urutan antrean'};
     $('qLog').innerHTML=`<thead><tr><th>Dikirim</th><th>Oleh</th><th>Jenis</th><th>Isi</th><th>Status</th>${ROLE==='owner'?'<th></th>':''}</tr></thead><tbody>`+
       (rows.map(r=>`<tr><td class="num" style="font-size:12px">${fDT(r.at)}</td><td>${esc(names[r.by]||'Editor')}</td><td>${tp[r.type]||esc(r.type)}</td><td style="white-space:normal;max-width:420px">${esc(r.summary||'')}${r.msg?`<div class="src" style="color:var(--late)">${esc(r.msg)}</div>`:''}</td><td>${st[r.status]||esc(r.status)}</td>${ROLE==='owner'?`<td>${r.status==='error'?`<button type="button" class="btn sm" data-retry="${esc(r.id)}">Ulangi</button>`:''}</td>`:''}</tr>`).join('')||`<tr><td colspan="6" class="empty">Belum ada pengajuan.</td></tr>`)+'</tbody>';
     $('qLog').querySelectorAll('[data-retry]').forEach(b=>b.onclick=async()=>{ try{ await DB.collection('queue').doc(b.dataset.retry).update({status:'pending',msg:''}); }catch(e){ toast('Gagal mengulang: '+e.message,true); } });
@@ -2379,6 +2398,13 @@ const APPLY={
     p.items.forEach(it=>{ const ex=fresh.kendala[it]; const row=ex?ex.row:next++;
       reqs.push(upd('Kendala_Item',row,1,[[it,p.kat,p.ket,p.eta==='NC'?'Belum ada komitmen':p.eta?{date:parseDT(p.eta)}:'',p.pic,p.status,now,who||'-']])); });
     reqs.push(logReq('Kendala item',p.items.length,`${p.items.join(', ')}: ${p.status} · ${p.kat}${p.eta==='NC'?' · belum ada komitmen kirim':p.eta?' · ETA '+p.eta:''}`,who));
+    await write(reqs);
+  },
+  async harga(p,who){
+    const fresh=await readSheet(), mm={}; fresh.master.forEach(m=>mm[m.item]=m); const reqs=[], miss=[];
+    p.items.forEach(([it,h,src])=>{ const m=mm[it]; if(!m){ miss.push(it); return; } reqs.push(upd('Master_Item',m.row,10,[[Math.round(h),src]])); });
+    if(!reqs.length) throw new Error('Item tidak ditemukan di Master_Item: '+miss.join(', '));
+    reqs.push(logReq('Harga item',p.items.length-miss.length,`${p.items.length-miss.length} item diberi harga dari FCA × kurs ${p.rate}`+(miss.length?` · tidak ada di Master: ${miss.join(', ')}`:''),who));
     await write(reqs);
   },
   async rulereq(p,who){
@@ -2522,6 +2548,47 @@ $('llDet').addEventListener('toggle',()=>{ if($('llDet').open&&SIM) renderCap();
   document.addEventListener('keydown',e=>{ if((e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k')){ if(document.querySelector('.dlg:not([hidden])')) return; e.preventDefault(); inp.focus(); inp.select(); } });
 })();
 
+/* ======================= ITEM TANPA HARGA ======================= */
+let FCA=null; const HGSEL=new Set();
+function fcaParse(wb){ const out={};
+  wb.SheetNames.forEach(name=>{ const rows=wb.rows[name]||[]; let hdr=-1;
+    for(let i=0;i<Math.min(30,rows.length);i++){ if(String((rows[i]||[])[3]??'').trim().toUpperCase().startsWith('DPCI')){ hdr=i; break; } } if(hdr<0) return;
+    const H=rows[hdr]; let fc=H.findIndex(v=>/fca\s*cost/i.test(String(v??''))); if(fc<0) fc=8;
+    let prog=name; for(let i=0;i<hdr;i++){ const r=rows[i]||[]; if(String(r[0]??'').trim()==='Program'&&r[1]) prog=String(r[1]).trim(); }
+    for(let i=hdr+1;i<rows.length;i++){ const r=rows[i]||[]; const d=String(r[3]??'').trim(); if(!/^\d{3}-\d{2}-\d{4}$/.test(d)) continue; const f=typeof r[fc]==='number'?r[fc]:parseFloat(String(r[fc]??'').replace(/[^0-9.]/g,'')); if(f>0) out[d]={fca:f,prog,desc:String(r[5]??'')}; } });
+  return out; }
+function hgRate(){ const v=+$('hgRate').value; if(v>0) return v; if(!FCA) return 0; const rs=D.master.filter(m=>m.harga>0&&FCA[m.item]).map(m=>m.harga/FCA[m.item].fca).sort((a,b)=>a-b); return rs.length?Math.round(rs[Math.floor(rs.length/2)]):0; }
+function renderHarga(){ if(!D) return; const ed=canEditUI(); $('hgImp').hidden=!ed;
+  const sc=$('hgScope').value, q=($('hgQ').value||'').toLowerCase().trim(), by={};
+  D.recap.filter(r=>!isTamp(r)&&r.po!=='TBA'&&!(r.harga>0)&&(sc==='all'||r.sisa>0)).forEach(r=>{ const x=by[r.item]=by[r.item]||{item:r.item,program:r.program,rows:[],qty:0,sisa:0,cust:new Set(),sw:null}; x.rows.push(r); x.qty+=r.qty; x.sisa+=r.sisa; x.cust.add(r.cust); const t=parseDT(r.sw); if(t&&(!x.sw||t<x.sw)) x.sw=t; });
+  const rate=hgRate(); if(FCA&&!$('hgRate').value&&rate) $('hgRate').value=rate;
+  let L=Object.values(by).map(x=>{ const m=D.masterMap[x.item]||{}, f=FCA&&FCA[x.item]; return Object.assign(x,{m,f,est:f&&rate?Math.round(f.fca*rate):0}); });
+  L=L.filter(x=>!q||(x.item+' '+x.program+' '+x.rows.map(r=>r.po).join(' ')).toLowerCase().includes(q)).sort((a,b)=>(a.sw||9e15)-(b.sw||9e15)||b.sisa-a.sisa);
+  const rows=L.reduce((a,x)=>a+x.rows.length,0), withF=L.filter(x=>x.f), estV=L.reduce((a,x)=>a+x.est*x.sisa,0), pos=new Set(L.flatMap(x=>x.rows.map(r=>r.po)));
+  const tile=(l,v,sm,c)=>`<div class="${c||''}"><span>${l}</span><b>${v}</b><small>${sm}</small></div>`;
+  $('hgKpi').innerHTML=tile('Item tanpa harga',L.length,`${rows} baris order`,'acc')+tile('PO terdampak',pos.size,'nilai PO ini belum lengkap')+tile('Qty order',nf.format(L.reduce((a,x)=>a+x.qty,0))+'<em>pack</em>','total baris tanpa harga')+tile('Sisa',nf.format(L.reduce((a,x)=>a+x.sisa,0))+'<em>pack</em>','belum ikut nilai sisa')+
+    tile('Ada FCA Cost',FCA?`${withF.length}<em>/ ${L.length}</em>`:'–',FCA?(L.length-withF.length?`${L.length-withF.length} item tidak ada di file`:'semua item ditemukan'):'impor file rekap untuk membaca','')+tile('Estimasi nilai sisa',FCA?fRp(estV):'–',FCA?`kurs ${nf.format(rate)}`:'butuh FCA Cost',FCA?'acc':'');
+  if(FCA) $('hgInfo').textContent=`${Object.keys(FCA).length} DPCI dengan FCA Cost terbaca dari ${FCA._file}. Kurs bawaan ${nf.format(hgRate())} = median harga ÷ FCA item yang sudah punya keduanya.`; else $('hgInfo').textContent='Pilih file rekap PO Target (format sama dengan impor Order Baru). Kolom FCA Cost yang tersembunyi tetap terbaca.';
+  [...HGSEL].forEach(i=>{ if(!L.some(x=>x.item===i&&x.f)) HGSEL.delete(i); }); $('hgApply').disabled=!HGSEL.size; $('hgApply').textContent=HGSEL.size?`Simpan harga ${HGSEL.size} item ke Master_Item`:'Simpan harga terpilih ke Master_Item';
+  $('hgTbl').innerHTML=`<thead><tr>${ed?'<th class="c-ck"><input type="checkbox" id="hgAll" aria-label="Pilih semua yang ada FCA"></th>':''}<th>Item / DPCI</th><th>PO · customer</th><th>SW terdekat</th><th class="r">Qty</th><th class="r">Sisa</th><th class="r">FCA Cost (USD)</th><th class="r">Estimasi harga / pack</th><th class="r">Estimasi nilai sisa</th><th>Keterangan</th></tr></thead><tbody>`+
+    (L.map(x=>`<tr>${ed?`<td class="c-ck">${x.f?`<input type="checkbox" data-hg="${esc(x.item)}" ${HGSEL.has(x.item)?'checked':''} aria-label="Pilih ${esc(x.item)}">`:''}</td>`:''}<td><b class="num">${esc(x.item)}</b><div class="mini">${esc((x.m.program||x.program||'').replace(/^D53\s*/,''))}</div></td>
+      <td><span class="num">${x.rows.length} PO</span> <span class="mini">${esc([...x.cust].join(', '))}</span><div class="mini num">${esc(x.rows.map(r=>r.po).slice(0,2).join(', '))}${x.rows.length>2?' …':''}</div></td>
+      <td class="num">${x.sw?fD(x.sw):'–'}</td><td class="r num">${nf.format(x.qty)}</td><td class="r num">${nf.format(x.sisa)}</td>
+      <td class="r num">${x.f?'$ '+x.f.fca.toFixed(3):'–'}</td><td class="r num">${x.est?'<b>'+fRp(x.est)+'</b>':'–'}</td><td class="r num">${x.est?fRp(x.est*x.sisa):'–'}</td>
+      <td class="mini" style="white-space:normal">${x.f?esc(x.f.prog):FCA?'<span class="pill late">Tidak ada di file</span>':(x.m.item?'Item ada di Master, harga kosong':'Belum ada di Master_Item')}</td></tr>`).join('')||`<tr><td colspan="10" class="empty">Semua baris order sudah punya harga.</td></tr>`)+'</tbody>';
+  $('hgTbl').querySelectorAll('[data-hg]').forEach(c=>c.onchange=()=>{ c.checked?HGSEL.add(c.dataset.hg):HGSEL.delete(c.dataset.hg); renderHarga(); });
+  const all=$('hgAll'); if(all){ const can=L.filter(x=>x.f); all.checked=can.length&&can.every(x=>HGSEL.has(x.item)); all.onchange=()=>{ can.forEach(x=>all.checked?HGSEL.add(x.item):HGSEL.delete(x.item)); renderHarga(); }; }
+  HG_L=L; }
+let HG_L=[];
+async function hgApply(){ const rate=hgRate(); if(!rate){ toast('Isi kurs dulu.',true); return; }
+  const items=HG_L.filter(x=>HGSEL.has(x.item)&&x.f).map(x=>[x.item,Math.round(x.f.fca*rate),`FCA $${x.f.fca} × kurs ${rate} (estimasi, ${x.f.prog})`]);
+  if(!items.length) return;
+  if(!await ask('Simpan harga estimasi?',`<p class="note" style="font-size:13.5px">${items.length} item akan diberi harga di Master_Item dengan kurs ${nf.format(rate)} Rp/USD. Harga SO yang ada nanti tetap diutamakan.</p>`)) return;
+  if(await submit('harga',{items,rate},`Harga ${items.length} item dari FCA × ${rate}`,'Harga tersimpan di Master_Item.')){ HGSEL.clear(); } }
+$('hgFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; if(typeof DecompressionStream==='undefined'){ toast('Browser ini belum bisa membaca Excel. Pakai Chrome/Edge terbaru.',true); return; }
+  $('hgInfo').textContent='Membaca file…'; try{ FCA=fcaParse(await xlsxRead(await f.arrayBuffer())); FCA._file=f.name; Object.defineProperty(FCA,'_file',{enumerable:false}); $('hgRate').value=''; HGSEL.clear(); HG_L.length=0; renderHarga(); HG_L.filter(x=>x.f).forEach(x=>HGSEL.add(x.item)); renderHarga(); }catch(err){ FCA=null; $('hgInfo').textContent='Gagal membaca file: '+(err.message||err); } };
+$('hgRate').oninput=renderHarga; $('hgScope').onchange=renderHarga; $('hgQ').oninput=renderHarga; $('hgApply').onclick=hgApply;
+
 /* ======================= IMPOR FILE REKAP PO (format Target) ======================= */
 let IMP=null; // {file, lines:[{sheet,program,po,item,qty,cp,sw,desc}], pos:{po:{sw,n}}}
 function impSW(v){ if(v instanceof Date&&!isNaN(v)) return isoDate(v.getTime()); if(typeof v==='number') return isoDate(serialToLocal(v));
@@ -2589,7 +2656,7 @@ function renderImp(){
 }
 async function impLoad(f){
   if(typeof DecompressionStream==='undefined'){ toast('Browser ini belum bisa membaca file Excel. Pakai Chrome/Edge versi terbaru.',true); return; }
-  try{ const buf=await f.arrayBuffer(); const wb=await xlsxRead(buf); const p=impParse(wb);
+  try{ const buf=await f.arrayBuffer(); const wb=await xlsxRead(buf); const p=impParse(wb); try{ const fx=fcaParse(wb); if(Object.keys(fx).length){ FCA=fx; Object.defineProperty(FCA,'_file',{value:f.name,enumerable:false}); } }catch(e){}
     if(!p.lines.length){ IMP=null; $('impInfo').innerHTML='<span style="color:var(--late)">Tidak menemukan baris PO. Pastikan formatnya rekap PO Target (baris "PO#" di kolom K, DPCI di kolom D).</span>'; renderImp(); return; }
     IMP=Object.assign(p,{file:f.name,pick:{}}); $('impPO').disabled=false;
     $('impInfo').textContent=`${f.name}: ${p.lines.length} baris item, ${Object.keys(p.pos).length} PO terbaca. Pilih PO di bawah atau ketik nomornya.`;
