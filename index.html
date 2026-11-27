@@ -746,6 +746,10 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
 #kdDlg .po-m{width:min(1240px,96vw);max-width:min(1240px,96vw)}
 #kdTbl tfoot td{font-weight:700;background:var(--panel-2,#f3f5f9);border-top:2px solid var(--line);white-space:nowrap}
 #kdTbl td.num{white-space:nowrap}
+.pill.kdb{background:#fde7d3;color:#b4520a}
+[data-theme=dark] .pill.kdb{background:rgba(234,120,30,.18);color:#f5a35c}
+.ps-r i.r-k{background:#fde7d3;color:#b4520a}
+.src.kd-n{color:#b4520a;font-size:10.5px;margin-top:3px;line-height:1.3;white-space:normal;min-width:130px;max-width:150px;font-family:var(--f-body);cursor:help}
 
 </style>
 </head>
@@ -790,7 +794,7 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
       <section class="card" id="po">
         <div class="card-h">
           <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg></span><div><h2>PO &amp; status</h2><p>Ringkasan per PO hasil simulasi. Klik baris untuk melihat detail item<span class="ed-only">, lalu Ubah PO untuk mengoreksi data</span>. PO TBA ada di bagian Tampungan TBA.</p></div></div>
-          <div class="toolbar flt"><select id="poMonth" title="Bulan SW"><option value="">Semua bulan SW</option></select><select id="poCust" title="Customer"><option value="">Semua customer</option></select><select id="poStat" title="Status"><option value="OPEN" selected title="On progress + belum produksi">Belum closed</option><option value="">Semua status</option><option>BELUM PRODUKSI</option><option>ON PROGRESS</option><option>CLOSED</option></select><select id="poFilter" title="Risiko"><option value="">Semua risiko</option><option>Terlambat</option><option>Mepet</option><option>Aman</option><option>Selesai</option></select><input id="poSearch" placeholder="Cari PO / customer / item (DPCI)" style="width:230px"><button type="button" class="btn sm sec" id="poClr" hidden>Reset filter</button></div>
+          <div class="toolbar flt"><select id="poMonth" title="Bulan SW"><option value="">Semua bulan SW</option></select><select id="poCust" title="Customer"><option value="">Semua customer</option></select><select id="poStat" title="Status"><option value="OPEN" selected title="On progress + belum produksi">Belum closed</option><option value="">Semua status</option><option>BELUM PRODUKSI</option><option>ON PROGRESS</option><option>CLOSED</option></select><select id="poFilter" title="Risiko"><option value="">Semua risiko</option><option>Terlambat</option><option>Tertahan kendala</option><option>Mepet</option><option>Aman</option><option>Selesai</option></select><input id="poSearch" placeholder="Cari PO / customer / item (DPCI)" style="width:230px"><button type="button" class="btn sm sec" id="poClr" hidden>Reset filter</button></div>
         </div>
         <div class="po-sum" id="poSum"></div>
         <div class="tw"><table id="poTbl"></table></div>
@@ -1165,7 +1169,9 @@ const fH=h=>{ const m=Math.round(Math.abs(h)*60); return (h<0?'−':'')+(m>=60?M
 const fRp=v=>Math.abs(v)>=1e9?'Rp '+(v/1e9).toLocaleString('id-ID',{maximumFractionDigits:2})+' M':Math.abs(v)>=1e6?'Rp '+(v/1e6).toLocaleString('id-ID',{maximumFractionDigits:1})+' jt':'Rp '+nf.format(Math.round(v||0));
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const clone=x=>JSON.parse(JSON.stringify(x));
-const PILL={Aman:'ok',Selesai:'ok',CLOSED:'ok',Mepet:'warn','ON PROGRESS':'warn',Terlambat:'late','BELUM PRODUKSI':'na','Belum dijadwalkan':'na'};
+const PILL={Aman:'ok',Selesai:'ok',CLOSED:'ok',Mepet:'warn','ON PROGRESS':'warn',Terlambat:'late','BELUM PRODUKSI':'na','Belum dijadwalkan':'na','Tertahan kendala':'kdb'};
+const RISK_RANK={Selesai:0,Aman:1,'Belum dijadwalkan':2,Mepet:3,'Tertahan kendala':4,Terlambat:5};
+const kdNote=p=>!p.kd?'':`<div class="src kd-n" title="${esc(p.kd.items.map(x=>x.item+': '+x.kat+(x.nc?' (belum ada komitmen)':x.eta?' (ETA '+fD(x.eta)+')':' (ETA belum diisi)')).join('\n'))}">⚠ ${esc(p.kd.kat[0])}${p.kd.kat.length>1?' +'+(p.kd.kat.length-1):''} · ${p.kd.nc?'belum ada komitmen':p.kd.blocked?'ETA belum diisi':'ETA '+fD(p.kd.eta)}${p.kd.byKd?' · timeline: '+esc(p.riskTL):''}</div>`;
 const pill=s=>`<span class="pill ${PILL[s]||'na'}">${esc(s)}</span>`;
 
 function toast(msg,bad){ const t=$('toast'); t.textContent=msg; t.className='toast'+(bad?' bad':''); t.hidden=false; clearTimeout(t._h); t._h=setTimeout(()=>t.hidden=true,bad?9000:4500); }
@@ -1198,8 +1204,17 @@ function poSummary(rows,P){
     const qty=rs.reduce((a,r)=>a+r.qty,0), out=rs.reduce((a,r)=>a+r.output,0), sisa=rs.reduce((a,r)=>a+r.sisa,0), nilai=rs.reduce((a,r)=>a+r.nilai,0);
     const sw=parseDT(rs[0].sw), end=endBy[po]||null, status=sisa<=0?'CLOSED':out<=0?'BELUM PRODUKSI':'ON PROGRESS';
     const gap=(end&&sw)?(sw-end)/DAY:null;
-    const risk=status==='CLOSED'?'Selesai':end==null?'Belum dijadwalkan':gap<0?'Terlambat':gap<P.mepet?'Mepet':'Aman';
-    return {po,cust:rs[0].cust,sw,items:rs.length,qty,out,sisa,nilai,end,gap,status,risk,prog:qty?Math.min(out/qty,1):0};
+    const riskTL=status==='CLOSED'?'Selesai':end==null?'Belum dijadwalkan':gap<0?'Terlambat':gap<P.mepet?'Mepet':'Aman';
+    // Kendala item (supply packaging/foil/approval) yang masih terbuka ikut menentukan risiko
+    const KK=D.kendala||{}, kdi=status==='CLOSED'?[]:rs.filter(r=>r.sisa>0&&KK[r.item]&&KD_OPEN(KK[r.item].status)).map(r=>{ const k=KK[r.item], eta=k.eta?parseDT(k.eta):null;
+      const sr=rows.filter(x=>x.q.po===po&&x.q.item===r.item&&x.q.sisa>0), st=sr.length?Math.min(...sr.map(x=>x.start)):null, en=sr.length?Math.max(...sr.map(x=>x.end)):null;
+      const eEnd=eta?(st&&st>=eta?en:eta+(en&&st?en-st:0)):null; return {item:r.item,kat:k.kat||'Kendala',status:k.status,eta,nc:k.nc,blocked:k.nc||!eta,eEnd}; });
+    let kd=null, gapK=null, risk=riskTL;
+    if(kdi.length){ const bl=kdi.filter(x=>x.blocked), kEnd=Math.max(...kdi.filter(x=>x.eEnd).map(x=>x.eEnd),end||0)||null; gapK=kEnd&&sw?(sw-kEnd)/DAY:null;
+      const rk=bl.length?'Tertahan kendala':gapK==null?'Aman':gapK<0?'Terlambat':gapK<P.mepet?'Mepet':'Aman';
+      risk=RISK_RANK[rk]>RISK_RANK[riskTL]?rk:riskTL;
+      kd={n:kdi.length,items:kdi,blocked:bl.length,kat:[...new Set(kdi.map(x=>x.kat))],eta:kdi.some(x=>x.eta)?Math.max(...kdi.filter(x=>x.eta).map(x=>x.eta)):null,nc:kdi.some(x=>x.nc),gapK,byKd:risk!==riskTL}; }
+    return {po,cust:rs[0].cust,sw,items:rs.length,qty,out,sisa,nilai,end,gap,status,risk,riskTL,kd,prog:qty?Math.min(out/qty,1):0};
   }).filter(Boolean);
 }
 
@@ -1399,12 +1414,12 @@ function update(){
   renderHero(); renderKpis(); renderLede(diffs); renderNow(); renderQueue(); renderPO(); renderKendala(); renderHarga(); renderTBA(); renderRQ(); renderCap(); renderDaily(); renderRules();
 }
 function stats(sim,P){ const pos=poSummary(sim.rows,P), os=pos.filter(p=>p.status!=='CLOSED');
-  return {pos,os,late:os.filter(p=>p.risk==='Terlambat').length,warn:os.filter(p=>p.risk==='Mepet').length,fin:Math.max(0,...sim.rows.filter(r=>r.q.sisa>0).map(r=>r.end))}; }
+  return {pos,os,kdb:os.filter(p=>p.risk==='Tertahan kendala').length,late:os.filter(p=>p.risk==='Terlambat').length,warn:os.filter(p=>p.risk==='Mepet').length,fin:Math.max(0,...sim.rows.filter(r=>r.q.sisa>0).map(r=>r.end))}; }
 function renderHero(){
   const s=stats(SIM,ST.params), b=BASE?stats(BASE,ORIG.params):s, dh=(s.fin-b.fin)/HOUR;
   const sisa=D.recap.reduce((a,r)=>a+r.sisa,0), nilai=D.recap.reduce((a,r)=>a+r.nilai,0);
   const tiles=[
-    ['PO tepat waktu',`${s.os.length-s.late}<small>/ ${s.os.length}</small>`,s.late?`${s.late} PO lewat SW`:s.warn?`${s.warn} PO gap < ${ST.params.mepet} hari`:'Semua selesai sebelum SW',s.late?'bad':s.warn?'warn':'good'],
+    ['PO tepat waktu',`${s.os.length-s.late-s.kdb}<small>/ ${s.os.length}</small>`,[s.late?`${s.late} PO lewat SW`:'',s.kdb?`${s.kdb} tertahan kendala`:''].filter(Boolean).join(' · ')||(s.warn?`${s.warn} PO gap < ${ST.params.mepet} hari`:'Semua selesai sebelum SW'),s.late||s.kdb?'bad':s.warn?'warn':'good'],
     ['Folding selesai',fDT(s.fin),Math.abs(dh)<0.02?'sama dengan Sheet':(dh>0?'+':'')+fH(dh)+' vs Sheet',dh>0.02?'warn':'info'],
     ['Utilisasi kapasitas',Math.round(SIM.util*100)+'<small>%</small>',`${nf.format(Math.round(SIM.need))} dari ${nf.format(Math.round(SIM.avail))} jam shift`,SIM.util>1?'bad':SIM.util>.85?'warn':'good'],
     ['Sisa order',nf.format(sisa)+'<small>pack</small>',fRp(nilai)+' nilai sisa','info']];
@@ -1508,7 +1523,7 @@ function renderPO(){
   list.map(p=>{ const b=bMap[p.po]; const moved=b&&b.risk!==p.risk;
     return `<tr data-po="${esc(p.po)}" class="${pend.has(p.po)?'le-pend':''}" style="cursor:pointer" title="Klik untuk detail"><td class="ord"><b>${esc(p.po)}</b><div class="c po">${esc(p.cust)}${qs.length&&!(p.po+" "+p.cust).toLowerCase().includes(qs[0])?` · <span class="qhl">${D.recap.filter(r=>r.po===p.po&&qs.some(w=>(r.item+" "+r.program).toLowerCase().includes(w))).map(r=>esc(r.item)).slice(0,3).join(", ")}</span>`:""}${pend.has(p.po)?' · <span class="pill warn">perubahan menunggu sinkron</span>':''}</div></td><td class="num">${fD(p.sw)}</td><td class="r num">${p.items}</td><td class="r num">${nf.format(p.qty)}</td><td class="r num">${nf.format(p.sisa)}</td>
     <td><span class="pbar"><i style="width:${Math.round(p.prog*100)}%"></i></span><span class="num" style="font-size:12px">${Math.round(p.prog*100)}%</span></td><td>${pill(p.status)}</td><td class="num" style="font-size:12px">${p.end?fDT(p.end):'–'}</td>
-    <td class="r num">${p.gap==null?'–':nf1.format(p.gap)}</td><td class="r num">${fRp(p.nilai)}</td><td>${pill(p.risk)}${moved?`<div class="src">Sheet: ${esc(b.risk)}</div>`:''}</td></tr>`; }).join('')+'</tbody>';
+    <td class="r num">${p.gap==null?'–':nf1.format(p.gap)}${p.kd&&p.kd.gapK!=null&&p.kd.byKd&&!p.kd.blocked?`<div class="src neg">kendala ${nf1.format(p.kd.gapK)}</div>`:''}</td><td class="r num">${fRp(p.nilai)}</td><td>${pill(p.risk)}${kdNote(p)}${moved?`<div class="src">Sheet: ${esc(b.risk)}</div>`:''}</td></tr>`; }).join('')+'</tbody>';
   $('poTbl').querySelectorAll('tr[data-po]').forEach(tr=>tr.onclick=()=>openPD(tr.dataset.po));
 }
 function renderPoSum(list,F){
@@ -1530,7 +1545,7 @@ function renderPoSum(list,F){
     <div><span>Sudah output</span><b>${nf.format(out)}<em>pack</em></b><small><span class="pbar"><i style="width:${Math.round(pr*100)}%"></i></span> ${Math.round(pr*100)}% · ${fRp(vOut)}</small></div>
     <div class="hl"><span>Sisa</span><b>${nf.format(sisa)}<em>pack</em></b><small>nilai sisa <b>${fRp(vSisa)}</b>${noPrice?` · ${noPrice} item tanpa harga`:''}</small></div>
     <div><span>Jam kerja dibutuhkan</span><b>${nf1.format(jam)}<em>jam</em></b><small>${fin?'selesai '+fDT(fin):'tidak ada sisa'}</small></div>
-    <div><span>Risiko</span><b class="ps-r">${cnt('Terlambat')?`<i class="r-l">${cnt('Terlambat')} terlambat</i>`:''}${cnt('Mepet')?`<i class="r-m">${cnt('Mepet')} mepet</i>`:''}${cnt('Aman')?`<i class="r-a">${cnt('Aman')} aman</i>`:''}${cnt('Belum dijadwalkan')?`<i>${cnt('Belum dijadwalkan')} belum dijadwal</i>`:''}${!list.some(p=>p.sisa>0)?'<i class="r-a">semua selesai</i>':''}</b><small>${worst?`gap tersempit ${esc(worst.po)}: ${nf1.format(worst.gap)} hari`:'–'}</small></div>
+    <div><span>Risiko</span><b class="ps-r">${cnt('Terlambat')?`<i class="r-l">${cnt('Terlambat')} terlambat</i>`:''}${cnt('Tertahan kendala')?`<i class="r-k">${cnt('Tertahan kendala')} tertahan kendala</i>`:''}${cnt('Mepet')?`<i class="r-m">${cnt('Mepet')} mepet</i>`:''}${cnt('Aman')?`<i class="r-a">${cnt('Aman')} aman</i>`:''}${cnt('Belum dijadwalkan')?`<i>${cnt('Belum dijadwalkan')} belum dijadwal</i>`:''}${!list.some(p=>p.sisa>0)?'<i class="r-a">semua selesai</i>':''}</b><small>${worst?`gap tersempit ${esc(worst.po)}: ${nf1.format(worst.gap)} hari`:'–'}</small></div>
   </div>
   <div class="ps-f">${[op?`<span>${op} on progress</span>`:'',bp?`<span>${bp} belum produksi</span>`:'',cl?`<span>${cl} closed</span>`:'',near?`<span>SW terdekat <b>${fD(near.sw)}</b> · ${esc(near.po)}</span>`:'',ct.length>1&&sisa?`<span>Sisa terbesar: <b>${esc(ct[0][0])}</b> ${Math.round(ct[0][1]/sisa*100)}%${ct[1]?` · ${esc(ct[1][0])} ${Math.round(ct[1][1]/sisa*100)}%`:''}</span>`:''].filter(Boolean).join('')}</div>`;
 }
@@ -1620,9 +1635,9 @@ function kdData(key){
       go:['antrean','Lihat di antrean',()=>{ const x=$('qSearch'); if(x){ x.value=it; x.dispatchEvent(new Event('input')); } }]}; }
   switch(key){
   case 'ontime': { const L=s.os.slice().sort((a,b)=>(a.gap??1e9)-(b.gap??1e9));
-    return {t:'PO tepat waktu',sub:'PO outstanding diurutkan dari gap paling sempit. Gap = hari antara rencana selesai dan SW.',
-      sum:chip('PO outstanding',s.os.length)+chip('Aman',s.os.filter(p=>p.risk==='Aman').length)+chip('Mepet',s.warn)+chip('Terlambat',s.late),
-      h:['PO','Customer','SW','Item','Sisa','Rencana selesai','Gap (hari)','Risiko'],r:L.map(p=>[`<b>${esc(p.po)}</b>`,esc(p.cust),fD(p.sw),p.items,nf.format(p.sisa),p.end?fDT(p.end):'–',gapTd(p.gap),pill(p.risk)]),go:['po','Buka PO & Status']}; }
+    return {t:'PO tepat waktu',sub:'PO outstanding diurutkan dari gap paling sempit. Gap = hari antara rencana selesai dan SW. Risiko juga memperhitungkan kendala item yang masih terbuka (ETA supply / belum ada komitmen).',
+      sum:chip('PO outstanding',s.os.length)+chip('Aman',s.os.filter(p=>p.risk==='Aman').length)+chip('Mepet',s.warn)+chip('Tertahan kendala',s.os.filter(p=>p.risk==='Tertahan kendala').length)+chip('Terlambat',s.late),
+      h:['PO','Customer','SW','Item','Sisa','Rencana selesai','Gap (hari)','Risiko'],r:L.map(p=>[`<b>${esc(p.po)}</b>`,esc(p.cust),fD(p.sw),p.items,nf.format(p.sisa),p.end?fDT(p.end):'–',gapTd(p.gap),pill(p.risk)+kdNote(p)]),go:['po','Buka PO & Status']}; }
   case 'fin': { const L=act.slice().sort((a,b)=>b.end-a.end);
     return {t:'Folding selesai',sub:`Antrean aktif selesai ${fDT(s.fin)}. Diurutkan dari item yang selesai paling akhir.`,
       sum:chip('Item aktif',act.length)+chip('Mulai antrean',fDT(SIM.start))+chip('Selesai',fDT(s.fin))+chip('Total durasi',nf1.format(SIM.need)+' jam'),
