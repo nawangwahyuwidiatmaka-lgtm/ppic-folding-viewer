@@ -758,7 +758,7 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
   </div>
   <div class="top-in tabrow">
     <div class="gs" id="gs" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="gsQ" type="search" placeholder="Cari PO, item / DPCI, program, customer…" autocomplete="off" aria-label="Cari di dashboard" aria-controls="gsList" aria-expanded="false"><kbd>/</kbd><div class="gs-list" id="gsList" role="listbox" hidden></div></div>
-    <nav class="tabs" id="snav" aria-label="Navigasi bagian"><a href="#ringkasan" class="on">Ringkasan</a><a href="#input">Input Output</a><a href="#po">PO &amp; Status</a><a href="#kendala">Kendala</a><a href="#harga">Harga</a><a href="#antrean">Antrean</a><a href="#kapasitas">Loading</a><a href="#tba">TBA</a><a href="#orderbaru">Order Baru</a><a href="#aturan">Aturan</a></nav>
+    <nav class="tabs" id="snav" aria-label="Navigasi bagian"><a href="#ringkasan" class="on">Ringkasan</a><a href="#po">PO &amp; Status</a><a href="#kendala">Kendala</a><a href="#kapasitas">Loading</a><a href="#antrean">Antrean</a><a href="#harga">Harga</a><a href="#tba">TBA</a><a href="#input">Input Output</a><a href="#orderbaru">Order Baru</a><a href="#aturan">Aturan</a></nav>
   </div>
 </header>
 <div class="hero"><div class="hero-in" id="hero"></div></div>
@@ -784,25 +784,6 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
     <main>
       <section class="kpis" id="kpis" aria-label="Indikator utama"></section>
 
-      <section class="card" id="input">
-        <div class="card-h">
-          <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><div><h2>Input output produksi</h2><p>Ketik item, lalu isi qty Shift 1 dan Shift 2 untuk tiap PO outstanding item itu. Qty negatif untuk koreksi. Tersimpan ke Log_Output dan tercatat di Riwayat_Input.</p></div></div>
-        </div>
-        <div class="oi-bar">
-          <div class="field"><label for="oiTgl">Tanggal produksi</label><input type="date" id="oiTgl"></div>
-          <div class="field oi-find"><label for="oiQ">Item</label><input id="oiQ" autocomplete="off" placeholder="Ketik kode item atau nama program, misal 1143 atau Kids Bday" role="combobox" aria-expanded="false" aria-controls="oiSug"><div class="oi-sug" id="oiSug" role="listbox" hidden></div></div>
-        </div>
-        <div class="oi-draft">
-          <div class="oi-dh"><b>Daftar siap dikirim</b><span class="mini" id="outTotal"></span></div>
-          <div id="outDraft"></div>
-          <div class="toolbar" style="justify-content:flex-end;padding-top:10px"><button type="button" class="btn sec sm" id="bOutClr">Kosongkan</button><button type="button" class="btn pri" id="bOut">Simpan output</button></div>
-        </div>
-        <div class="card-h" style="padding-top:4px"><div class="ch-t"><div><h2 style="font-size:15px">Input tersimpan</h2><p id="logSub">300 input terakhir di Log_Output.</p></div></div><div class="toolbar"><input id="logQ" placeholder="Cari item / PO / tanggal" style="width:200px"></div></div>
-        <div class="tw" style="max-height:340px"><table id="logTbl"></table></div>
-        <div class="card-h" style="padding-top:4px"><div class="ch-t"><div><h2 style="font-size:15px">Status pengiriman ke Google Sheet</h2><p>Input, order, dan skenario dari tim. Masuk ke Sheet otomatis saat dashboard pemilik terbuka.</p></div></div></div>
-        <div class="tw" style="max-height:340px"><table id="qLog"></table></div>
-      </section>
-
       <section class="card" id="po">
         <div class="card-h">
           <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg></span><div><h2>PO &amp; status</h2><p>Ringkasan per PO hasil simulasi. Klik baris untuk melihat detail item<span class="ed-only">, lalu Ubah PO untuk mengoreksi data</span>. PO TBA ada di bagian Tampungan TBA.</p></div></div>
@@ -822,30 +803,6 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
         <div class="kd-vis" id="kdVis"></div>
         <div class="kd-bulk" id="kdBulk" hidden><span id="kdSel"></span><button type="button" class="btn pri sm" id="kdBulkBtn">Isi kendala untuk item terpilih</button><button type="button" class="btn sm" id="kdBulkClr">Batal pilih</button></div>
         <div class="tw" style="max-height:640px"><table id="kdlTbl"></table></div>
-      </section>
-
-      <section class="card" id="harga">
-        <div class="card-h">
-          <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12l9-9h8v8l-9 9z"/><circle cx="16" cy="8" r="1.6"/></svg></span><div><h2>Item tanpa harga</h2><p>Baris order yang belum punya harga SO maupun harga Master_Item, sehingga nilainya belum ikut terhitung. Harga bisa diisi dari kolom FCA Cost (tersembunyi) di file rekap PO.</p></div></div>
-          <div class="toolbar"><select id="hgScope" aria-label="Cakupan"><option value="os">Masih ada sisa</option><option value="all">Semua baris</option></select><input id="hgQ" placeholder="Cari item / PO / program" style="width:180px"></div>
-        </div>
-        <div class="kd-kpi" id="hgKpi"></div>
-        <div class="hg-imp" id="hgImp" hidden>
-          <div class="field"><label for="hgFile">File rekap PO (Excel) untuk membaca FCA Cost</label><input type="file" id="hgFile" accept=".xlsx,.xlsm"></div>
-          <div class="field"><label for="hgRate">Kurs (Rp per USD)</label><input type="number" id="hgRate" step="1" style="width:130px"></div>
-          <p class="mini" id="hgInfo"></p>
-          <button type="button" class="btn pri" id="hgApply" disabled>Simpan harga terpilih ke Master_Item</button>
-        </div>
-        <div class="tw" style="max-height:620px"><table id="hgTbl"></table></div>
-        <p class="note" style="padding:0 16px 14px;margin:0">Harga estimasi = FCA Cost (USD/pack) × kurs. Kurs bawaan dihitung dari item yang sudah punya harga dan FCA Cost; bisa diubah sebelum disimpan. Disimpan ke kolom Harga/Pack Master_Item dengan sumber "FCA × kurs (estimasi)", lalu otomatis dipakai Recap_Order bila harga SO belum ada.</p>
-      </section>
-
-      <section class="card" id="antrean">
-        <div class="card-h">
-          <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></span><div><h2>Antrean produksi</h2><p>Panah mengubah urutan, dan perubahannya otomatis tersimpan ke Jadwal_Produksi di Google Sheet. Isi Pola, MP, Eff, Setup hanya untuk pengecualian baris; kosong = ikut aturan atau default.</p></div></div>
-          <div class="legend"><span class="pill ok">Aman</span><span class="pill warn">Mepet</span><span class="pill late">Terlambat</span></div>
-        </div>
-        <div class="toolbar pad" style="padding-top:0;justify-content:space-between"><p class="mini" id="qHid" style="margin:0"></p><span class="mini" id="qSave"></span><input id="qSearch" placeholder="Cari item (DPCI) / PO / program" style="width:240px"></div><div class="tw"><table id="qTbl"></table></div>
       </section>
 
       <section class="card" id="kapasitas">
@@ -877,6 +834,30 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
         <div class="bars" id="daily"></div>
       </section>
 
+      <section class="card" id="antrean">
+        <div class="card-h">
+          <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></span><div><h2>Antrean produksi</h2><p>Panah mengubah urutan, dan perubahannya otomatis tersimpan ke Jadwal_Produksi di Google Sheet. Isi Pola, MP, Eff, Setup hanya untuk pengecualian baris; kosong = ikut aturan atau default.</p></div></div>
+          <div class="legend"><span class="pill ok">Aman</span><span class="pill warn">Mepet</span><span class="pill late">Terlambat</span></div>
+        </div>
+        <div class="toolbar pad" style="padding-top:0;justify-content:space-between"><p class="mini" id="qHid" style="margin:0"></p><span class="mini" id="qSave"></span><input id="qSearch" placeholder="Cari item (DPCI) / PO / program" style="width:240px"></div><div class="tw"><table id="qTbl"></table></div>
+      </section>
+
+      <section class="card" id="harga">
+        <div class="card-h">
+          <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12l9-9h8v8l-9 9z"/><circle cx="16" cy="8" r="1.6"/></svg></span><div><h2>Item tanpa harga</h2><p>Baris order yang belum punya harga SO maupun harga Master_Item, sehingga nilainya belum ikut terhitung. Harga bisa diisi dari kolom FCA Cost (tersembunyi) di file rekap PO.</p></div></div>
+          <div class="toolbar"><select id="hgScope" aria-label="Cakupan"><option value="os">Masih ada sisa</option><option value="all">Semua baris</option></select><input id="hgQ" placeholder="Cari item / PO / program" style="width:180px"></div>
+        </div>
+        <div class="kd-kpi" id="hgKpi"></div>
+        <div class="hg-imp" id="hgImp" hidden>
+          <div class="field"><label for="hgFile">File rekap PO (Excel) untuk membaca FCA Cost</label><input type="file" id="hgFile" accept=".xlsx,.xlsm"></div>
+          <div class="field"><label for="hgRate">Kurs (Rp per USD)</label><input type="number" id="hgRate" step="1" style="width:130px"></div>
+          <p class="mini" id="hgInfo"></p>
+          <button type="button" class="btn pri" id="hgApply" disabled>Simpan harga terpilih ke Master_Item</button>
+        </div>
+        <div class="tw" style="max-height:620px"><table id="hgTbl"></table></div>
+        <p class="note" style="padding:0 16px 14px;margin:0">Harga estimasi = FCA Cost (USD/pack) × kurs. Kurs bawaan dihitung dari item yang sudah punya harga dan FCA Cost; bisa diubah sebelum disimpan. Disimpan ke kolom Harga/Pack Master_Item dengan sumber "FCA × kurs (estimasi)", lalu otomatis dipakai Recap_Order bila harga SO belum ada.</p>
+      </section>
+
       <section class="card" id="tba">
         <div class="card-h">
           <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></span><div><h2>Tampungan TBA</h2><p>Output yang dikerjakan sebelum ada PO resmi. Saldo bertambah dari input output ke PO TBA, dan berkurang saat dialokasikan ke PO resmi.</p></div></div>
@@ -886,6 +867,25 @@ body.rail-off .rail-open:hover{padding-left:14px!important}
         <div class="tw" style="max-height:520px"><table id="tbaTbl"></table></div>
         <div class="card-h" style="padding-top:4px"><div class="ch-t"><div><h2 style="font-size:15px">Riwayat alokasi</h2><p>Setiap alokasi tercatat di Log_Output sebagai pasangan baris: TBA minus, PO resmi plus.</p></div></div></div>
         <div class="tw" style="max-height:300px"><table id="tbaHist"></table></div>
+      </section>
+
+      <section class="card" id="input">
+        <div class="card-h">
+          <div class="ch-t"><span class="cic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><div><h2>Input output produksi</h2><p>Ketik item, lalu isi qty Shift 1 dan Shift 2 untuk tiap PO outstanding item itu. Qty negatif untuk koreksi. Tersimpan ke Log_Output dan tercatat di Riwayat_Input.</p></div></div>
+        </div>
+        <div class="oi-bar">
+          <div class="field"><label for="oiTgl">Tanggal produksi</label><input type="date" id="oiTgl"></div>
+          <div class="field oi-find"><label for="oiQ">Item</label><input id="oiQ" autocomplete="off" placeholder="Ketik kode item atau nama program, misal 1143 atau Kids Bday" role="combobox" aria-expanded="false" aria-controls="oiSug"><div class="oi-sug" id="oiSug" role="listbox" hidden></div></div>
+        </div>
+        <div class="oi-draft">
+          <div class="oi-dh"><b>Daftar siap dikirim</b><span class="mini" id="outTotal"></span></div>
+          <div id="outDraft"></div>
+          <div class="toolbar" style="justify-content:flex-end;padding-top:10px"><button type="button" class="btn sec sm" id="bOutClr">Kosongkan</button><button type="button" class="btn pri" id="bOut">Simpan output</button></div>
+        </div>
+        <div class="card-h" style="padding-top:4px"><div class="ch-t"><div><h2 style="font-size:15px">Input tersimpan</h2><p id="logSub">300 input terakhir di Log_Output.</p></div></div><div class="toolbar"><input id="logQ" placeholder="Cari item / PO / tanggal" style="width:200px"></div></div>
+        <div class="tw" style="max-height:340px"><table id="logTbl"></table></div>
+        <div class="card-h" style="padding-top:4px"><div class="ch-t"><div><h2 style="font-size:15px">Status pengiriman ke Google Sheet</h2><p>Input, order, dan skenario dari tim. Masuk ke Sheet otomatis saat dashboard pemilik terbuka.</p></div></div></div>
+        <div class="tw" style="max-height:340px"><table id="qLog"></table></div>
       </section>
 
       <section class="card" id="orderbaru">
@@ -2597,16 +2597,16 @@ function impSW(v){ if(v instanceof Date&&!isNaN(v)) return isoDate(v.getTime());
 function impParse(wb){
   const lines=[], skipped=[];
   wb.SheetNames.forEach(name=>{ const rows=wb.rows[name]||[];
-    let hdr=-1; for(let i=0;i<Math.min(25,rows.length);i++){ if(String((rows[i]||[])[10]??'').trim()==='PO#'){ hdr=i; break; } }
-    if(hdr<0) return;
+    let hdr=-1, pc=10; for(let i=0;i<Math.min(40,rows.length)&&hdr<0;i++){ const r=rows[i]||[]; for(let c=8;c<=12;c++){ if(/^PO\s*(#|no\.?)?$/i.test(String(r[c]??'').trim())){ hdr=i; pc=c; break; } } }
+    if(hdr<0){ skipped.push(name); return; }
     let prog=name; for(let i=0;i<hdr;i++){ const r=rows[i]||[]; if(String(r[0]??'').trim()==='Program'&&r[1]) prog=String(r[1]).trim(); }
     const H=rows[hdr]||[], SWr=rows[hdr+1]||[];
-    for(let j=12;j<H.length;j++){ const po=String(H[j]??'').trim(); if(!/^\d{8,}$/.test(po)) continue;
+    for(let j=pc+1;j<H.length;j++){ let po=H[j]; po=typeof po==='number'?String(Math.round(po)):String(po??'').replace(/\.0+$/,'').replace(/\s/g,''); if(!/^\d{8,}$/.test(po)) continue;
       const sw=impSW(SWr[j]);
       for(let i=hdr+5;i<rows.length;i++){ const r=rows[i]||[]; const d=String(r[3]??'').trim(); if(!/^\d{3}-\d{2}-\d{4}$/.test(d)) continue;
-        const q=r[j]; if(typeof q==='number'&&q>0) lines.push({sheet:name,program:prog,po,item:d,qty:Math.round(q),cp:typeof r[10]==='number'?r[10]:+r[10]||null,sw,desc:String(r[5]??'')}); } } });
+        const q=typeof r[j]==='number'?r[j]:parseFloat(String(r[j]??'').replace(/[^0-9.]/g,'')); if(q>0) lines.push({sheet:name,program:prog,po,item:d,qty:Math.round(q),cp:typeof r[10]==='number'?r[10]:+r[10]||null,sw,desc:String(r[5]??'')}); } } });
   const pos={}; lines.forEach(l=>{ const p=pos[l.po]=pos[l.po]||{po:l.po,sw:l.sw,n:0,qty:0,progs:new Set()}; p.n++; p.qty+=l.qty; p.progs.add(l.program); if(!p.sw&&l.sw) p.sw=l.sw; });
-  return {lines,pos};
+  return {lines,pos,skipped};
 }
 function impSelected(){ return [...new Set(($('impPO').value||'').split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean))]; }
 function impRows(){ if(!IMP) return []; const sel=impSelected(); if(!sel.length) return [];
