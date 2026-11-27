@@ -2206,7 +2206,7 @@ async function publishPublic(){
   if(!D||ROLE!=='owner') return;
   const pub=Object.assign({},D); delete pub.masterMap; pub.params=Object.assign({},D.params); delete pub.params.admins;
   const json=JSON.stringify(pub); publishFeed(json); if(!DB||json===LAST_PUB) return;
-  try{ const CH=300000, n=Math.ceil(json.length/CH), at=Date.now(), sig=json.length+':'+hashStr(json);
+  try{ const CH=90000, n=Math.ceil(json.length/CH), at=Date.now(), sig=json.length+':'+hashStr(json);
     const cur=await DB.doc('public/latest').get(); if(cur.exists&&cur.data().sig===sig){ LAST_PUB=json; return; }
     for(let i=0;i<n;i++) await DB.doc('public/part_'+i).set({at,i,s:json.slice(i*CH,(i+1)*CH)});
     await DB.doc('public/latest').set({at,n,sig}); LAST_PUB=json; }catch(e){ toast('Data terbaru belum bisa diterbitkan untuk tim: '+((e&&e.message)||e),true); }
