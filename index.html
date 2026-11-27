@@ -1093,7 +1093,7 @@ function renderDelta(){ const el=$('ldDelta'); if(!BASE){ el.hidden=true; return
   el.innerHTML=`<span class="dl-h">Berubah sejak data sebelumnya</span>${parts.length?parts.join(' · '):'tidak ada perubahan angka utama'} <small>(dibandingkan data yang dilihat di browser ini ${fDT(p.at)})</small>`; el.hidden=false; }
 
 /* ======================= KENDALA PER ITEM ======================= */
-const KD_KAT=['Packaging GCP belum tersedia','Material / kertas belum tersedia','Artwork / approval belum final','Ditunda customer','Lainnya'];
+const KD_KAT=['Packaging GCP belum tersedia','Foil belum tersedia','Material / kertas belum tersedia','Artwork / approval belum final','Ditunda customer','Lainnya'];
 const KD_OPEN=s=>!/tersedia|selesai/i.test(s||''); let KDSEL=new Set(), KDV=[];
 function kdRows(){ const K=D.kendala||{}, sc=$('kdScope').value, by={};
   D.recap.filter(r=>!isTamp(r)&&r.sisa>0&&r.po!=='TBA').forEach(r=>{ const x=by[r.item]=by[r.item]||{item:r.item,program:r.program,rows:[],sisa:0,nilai:0,out:0,qty:0,cust:new Set(),sw:null}; x.rows.push(r); x.sisa+=r.sisa; x.nilai+=r.nilai||0; x.out+=r.output||0; x.qty+=r.qty; x.cust.add(r.cust); const t=parseDT(r.sw); if(t&&(!x.sw||t<x.sw)) x.sw=t; });
