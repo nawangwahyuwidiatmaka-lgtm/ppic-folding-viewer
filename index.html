@@ -2178,6 +2178,12 @@ async function readFeed(first){
 let FEED_ON=false;
 function watchFeed(){ if(FEED_ON) return; FEED_ON=true; $('srcTxt').textContent='Memuat data terbit…'; readFeed(true); setInterval(()=>{ if(!document.hidden) readFeed(false); },3*60000); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) readFeed(false); }); }
 let PUB_UNSUB=null, PUB_TIMER=null;
+function hashStr(t){ let h=2166136261; for(let i=0;i<t.length;i++){ h^=t.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36); }
+async function readPub(b,tries){
+  try{ let json=b.json;
+    if(json==null){ const parts=[]; for(let i=0;i<(b.n||0);i++){ const d=await DB.doc('public/part_'+i).get(); if(!d.exists||d.data().at!==b.at) throw new Error('bagian data sedang diperbarui'); parts.push(d.data().s); } json=parts.join(''); }
+    PUB_AT=b.at; MODE='public'; setData(JSON.parse(json));
+  }catch(e){ if(tries<3) setTimeout(()=>readPub(b,tries+1),2500); else toast('Data terbit tidak bisa dibaca.',true); } }
 function watchPublic(){
   if(PUB_UNSUB) return; watchBeat();
   $('srcTxt').textContent='Memuat data terbit…';
@@ -2185,7 +2191,7 @@ function watchPublic(){
   PUB_UNSUB=DB.doc('public/latest').onSnapshot(s=>{
     clearTimeout(PUB_TIMER);
     if(!s.exists){ setBanner('warn','Belum ada data terbit','Data muncul setelah pemilik dashboard membukanya dengan Google Sheets tersambung.'); $('srcTxt').textContent='Belum ada data'; return; }
-    try{ const b=s.data(); PUB_AT=b.at; MODE='public'; setData(JSON.parse(b.json)); }catch(e){ toast('Data terbit tidak bisa dibaca.',true); }
+    const b=s.data(); readPub(b,0);
   }, e=>{ clearTimeout(PUB_TIMER); setBanner('warn','Data tidak bisa dibaca','Penyimpanan data dashboard tidak bisa diakses dari tampilan ini.'); });
 }
 let LAST_FEED=null;
@@ -2200,8 +2206,10 @@ async function publishPublic(){
   if(!D||ROLE!=='owner') return;
   const pub=Object.assign({},D); delete pub.masterMap; pub.params=Object.assign({},D.params); delete pub.params.admins;
   const json=JSON.stringify(pub); publishFeed(json); if(!DB||json===LAST_PUB) return;
-  try{ const cur=await DB.doc('public/latest').get(); if(cur.exists&&cur.data().json===json){ LAST_PUB=json; return; }
-    await DB.doc('public/latest').set({json,at:Date.now()}); LAST_PUB=json; }catch(e){ toast('Data terbaru belum bisa diterbitkan untuk tim: '+((e&&e.message)||e),true); }
+  try{ const CH=300000, n=Math.ceil(json.length/CH), at=Date.now(), sig=json.length+':'+hashStr(json);
+    const cur=await DB.doc('public/latest').get(); if(cur.exists&&cur.data().sig===sig){ LAST_PUB=json; return; }
+    for(let i=0;i<n;i++) await DB.doc('public/part_'+i).set({at,i,s:json.slice(i*CH,(i+1)*CH)});
+    await DB.doc('public/latest').set({at,n,sig}); LAST_PUB=json; }catch(e){ toast('Data terbaru belum bisa diterbitkan untuk tim: '+((e&&e.message)||e),true); }
 }
 function setData(d){
   D=d; D.masterMap={}; D.master.forEach(m=>D.masterMap[m.item]=m);
