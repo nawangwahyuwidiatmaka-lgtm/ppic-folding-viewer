@@ -691,6 +691,20 @@ body.rail-off .rail-open:hover{padding-left:9px}
 .kd-bar.clk em::after{content:" ›";color:var(--ink-3)}
 .kd-bar{grid-template-columns:minmax(0,1fr) minmax(90px,1.3fr) auto!important}
 .kd-bar i{background:var(--line)!important;height:9px!important}
+:root{--oc-ord:#8fb3ef;--oc-out:#1f5fd1;--oc-plan:#f07a3a}
+:root[data-theme="dark"]{--oc-ord:#5c7fc2;--oc-out:#7fa8ff;--oc-plan:#ff9a5c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--oc-ord:#5c7fc2;--oc-out:#7fa8ff;--oc-plan:#ff9a5c}}
+.oc-tag-s{font-size:9.5px;font-weight:800;letter-spacing:.08em;fill:var(--ink-3)}
+.oc-pill{font-size:9.5px;font-weight:700;fill:var(--warn)}.oc-pill.r{fill:var(--late)}
+.oc-po{font-size:10.5px;font-weight:600;fill:var(--ink-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.oc-chip{font-size:9.5px;font-weight:700}.oc-chip.g{fill:var(--ok)}.oc-chip.w{fill:var(--warn)}
+.oc-end{font-size:11px;font-weight:700;fill:var(--oc-plan)}.oc-end.r{fill:var(--late)}
+.oc-endv{font-size:11.5px;font-weight:700;fill:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.oc-today{font-size:9.5px;font-weight:800;letter-spacing:.04em;fill:#241800}
+.oc-peak{font-size:11px;font-weight:700;fill:var(--surface)}
+.oc-g{grid-template-columns:minmax(0,1fr)!important}
+/* alias variabel yang dipakai komponen baru */
+:root{--ink-3:var(--muted);--line-soft:color-mix(in srgb,var(--line) 65%,transparent)}
 
 </style>
 </head>
@@ -789,7 +803,7 @@ body.rail-off .rail-open:hover{padding-left:9px}
           <div class="oc-top"><div class="seg" role="group" aria-label="Periode ringkasan"><button type="button" data-ocp="m" class="on">Bulan ini</button><button type="button" data-ocp="c">Akumulasi s.d. bulan ini</button></div><p class="mini" id="ocNote"></p></div>
           <div class="oc-k" id="ocK"></div>
           <div class="oc-g">
-            <figure class="oc-fig"><figcaption><div><b>Order vs Kapasitas per Bulan</b><small>Order menurut bulan SW, produksi = output aktual + rencana jadwal, kapasitas dalam pack</small></div><span class="oc-leg" id="ocLegM"></span></figcaption><div id="ocMon" class="ll-ch"></div></figure>
+            <figure class="oc-fig"><figcaption><div><b>Order vs Kapasitas per Bulan</b><small>Batang terang = order per bulan SW, gelap = sudah output; kotak abu = kapasitas; garis = produksi (padat aktual, putus-putus rencana)</small></div><span class="oc-leg" id="ocLegM"></span></figcaption><div id="ocMon" class="ll-ch"></div></figure>
             <figure class="oc-fig"><figcaption><div><b>Akumulasi Order vs Level Loading</b><small>Area merah = produksi kumulatif tertinggal dari order yang jatuh tempo</small></div><span class="oc-leg" id="ocLegC"></span></figcaption><div id="ocCum" class="ll-ch"></div></figure>
           </div>
         </div>
@@ -1786,10 +1800,11 @@ function ocData(M){
   const now=Date.now(), cm=mStart(now), rc=D.recap.filter(r=>!isTamp(r)&&r.po!=='TBA'&&r.sw);
   const act=SIM.rows.filter(r=>r.q.sisa>0&&r.dur>0), rate=act.length?act.reduce((a,r)=>a+r.q.sisa,0)/act.reduce((a,r)=>a+r.dur,0):0;
   const swT=rc.map(r=>mStart(parseDT(r.sw))), dl=Object.keys(D.daily||{}).filter(d=>D.daily[d]).map(d=>mStart(parseDT(d)));
-  const lo=Math.min(...swT.filter(t=>t>=mStart(now-150*DAY)),...dl.filter(t=>t>=mStart(now-150*DAY)),cm), hi=Math.max(...swT,M?M[M.length-1].t:cm,cm);
+  const lo=Math.min(...swT.filter(t=>t>=mStart(now-330*DAY)),...dl.filter(t=>t>=mStart(now-330*DAY)),cm), hi=Math.max(...swT,M?M[M.length-1].t:cm,cm);
   const ms=[]; for(let t=lo;t<=hi;t=mNext(t)) ms.push({t,order:0,out:0,os:0,act:0,plan:0,cap:0});
   const at=t=>ms.find(m=>t>=m.t&&t<mNext(m.t));
-  rc.forEach(r=>{ const m=at(parseDT(r.sw)); if(!m) return; m.order+=r.qty; m.out+=Math.min(r.output||0,r.qty); m.os+=r.sisa||0; });
+  rc.forEach(r=>{ const m=at(parseDT(r.sw)); if(!m) return; m.order+=r.qty; m.out+=Math.min(r.output||0,r.qty); m.os+=r.sisa||0; (m.pos=m.pos||{})[r.po]=(m.pos[r.po]||0)+(r.sisa||0); });
+  ms.forEach(m=>{ const P=Object.values(m.pos||{}); m.npo=P.length; m.nclosed=P.filter(v=>v<=0).length; });
   Object.entries(D.daily||{}).forEach(([d,q])=>{ const m=at(parseDT(d)); if(m) m.act+=q; });
   const pl=levelLoad(SIM,'plan'); (pl||[]).forEach(x=>{ const m=at(x.t); if(m) m.plan+=x.pack; });
   const pola=ST.pola.find(q=>q.name===ST.params.kondisi)||ST.pola[0]; if(pola){ const hol=new Set(ST.holidays.map(h=>h.date)); buildIntervals(pola,hol,ms[0].t,mNext(ms[ms.length-1].t)).forEach(iv=>{ let a2=iv[0]; while(a2<iv[1]){ const m=at(a2); if(!m) break; const e=Math.min(iv[1],mNext(m.t)); m.cap+=(e-a2)/HOUR*rate; a2=e; } }); }
@@ -1806,25 +1821,41 @@ function renderOC(M){ const el=$('ocMon'); if(!el) return; const {ms,rate}=ocDat
     k('Kapasitas',A.cap?nf.format(Math.round(A.cap))+'<em>pack</em>':'–',`jam shift penuh × ${nf.format(Math.round(rate))} pack/jam`,'c-cap')+
     k('Loading',ld==null?'–':Math.round(ld*100)+'<em>%</em>',(gap>=0?'produksi ≥ order, lebih ':'produksi < order, kurang ')+nf.format(Math.abs(Math.round(gap)))+' pack',ld==null?'':ld>1?'bad':ld>.85?'warn':'ok');
   $('ocNote').textContent=`Kapasitas pack = jam shift sebulan penuh (pola default, libur dikurangi) × rata-rata ${nf.format(Math.round(rate))} pack/jam dari campuran item outstanding.`;
-  const SER=[['out','Order: sudah output','var(--s-act)'],['os','Order: outstanding','var(--s-os)'],['prod','Produksi (aktual + rencana)','var(--s-pl)'],['cap','Kapasitas','var(--ink)']];
+  const SER=[['os','Order (per SW)','var(--oc-ord)'],['out','Sudah output','var(--oc-out)'],['prod','Produksi: aktual / rencana','var(--oc-plan)'],['cap','Kapasitas','var(--ink-3)']];
   const leg=(id,list)=>{ $(id).innerHTML=list.map(([k2,l,c])=>`<button type="button" data-ocs="${k2}" aria-pressed="${!OCH.has(k2)}"><i style="background:${c}" class="${k2==='cap'||k2[0]==='c'&&k2.length>3?'ln':''}"></i>${l}</button>`).join(''); $(id).querySelectorAll('[data-ocs]').forEach(b=>b.onclick=()=>{ OCH.has(b.dataset.ocs)?OCH.delete(b.dataset.ocs):OCH.add(b.dataset.ocs); renderOC(M); }); };
   leg('ocLegM',SER); leg('ocLegC',[['co','Order kumulatif','var(--s-os)'],['cpl','Produksi kumulatif','var(--s-pl)'],['ccap','Kapasitas kumulatif','var(--ink)']]);
   // per bulan
-  { const W=Math.max(el.clientWidth,300), H=270, L=56, B=30, T=24, sh=k2=>!OCH.has(k2);
-    const raw=Math.max(1,...ms.map(m=>Math.max((sh('out')?m.out:0)+(sh('os')?m.os:0),sh('prod')?m.prod:0,sh('cap')?m.cap:0))), st=niceStep(raw/4), max=Math.ceil(raw/st)*st;
-    const n=ms.length, slot=(W-L-8)/n, bw=Math.min(30,slot*.3), y=v=>H-B-(v/max)*(H-B-T);
-    let sv=`<svg width="${W}" height="${H}" role="img" aria-label="Order vs kapasitas per bulan">`+llAxis(W,H,L,B,T,max,v=>v>=1e6?nf1.format(v/1e6)+' jt':v>=1e3?nf.format(v/1e3)+' rb':nf.format(v));
-    ms.forEach((m,i)=>{ const cx=L+slot*i+slot/2; if(m.cur) sv+=`<rect class="oc-now" x="${L+slot*i+2}" y="${T-14}" width="${slot-4}" height="${H-B-T+14}" rx="6"/>`;
-      let yb=H-B; const x1=cx-bw-2, x2=cx+2;
-      if(sh('out')&&m.out){ const h=(H-B)-y(m.out); sv+=`<rect x="${x1}" y="${yb-h}" width="${bw}" height="${h}" fill="var(--s-act)" rx="2"/>`; yb-=h; }
-      if(sh('os')&&m.os){ const h=(H-B)-y(m.os); sv+=`<rect x="${x1}" y="${yb-h}" width="${bw}" height="${h}" fill="var(--s-os)" rx="2"/>`; yb-=h; }
-      if(sh('prod')&&m.prod){ const ha=(H-B)-y(m.act), hp=(H-B)-y(m.plan); if(m.act) sv+=`<rect x="${x2}" y="${H-B-ha}" width="${bw}" height="${ha}" fill="var(--s-pl)" rx="2"/>`; if(m.plan) sv+=`<rect x="${x2}" y="${H-B-ha-hp}" width="${bw}" height="${hp}" fill="url(#ocHatch)" stroke="var(--s-pl)" stroke-width="1" rx="2"/>`; }
-      if(sh('cap')&&m.cap) sv+=`<line x1="${cx-slot*.42}" x2="${cx+slot*.42}" y1="${y(m.cap)}" y2="${y(m.cap)}" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>`;
-      if(m.load!=null&&m.prod>0&&sh('prod')&&sh('cap')) sv+=`<text class="ll-val ${m.load>1?'oc-r':''}" x="${cx}" y="${Math.min(y(m.prod),m.cap?y(m.cap):H)-7}" text-anchor="middle">${Math.round(m.load*100)}%</text>`;
-      sv+=`<text class="ll-ax ${m.cur?'oc-cur':''}" x="${cx}" y="${H-B+16}" text-anchor="middle">${mLbl(m.t)}</text><rect class="oc-hit" data-i="${i}" x="${L+slot*i}" y="${T}" width="${slot}" height="${H-B-T}" fill="transparent"/>`; });
-    sv+=`<defs><pattern id="ocHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--s-pl)" opacity=".18"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--s-pl)" stroke-width="2.4"/></pattern></defs>`;
+  { const W=Math.max(el.clientWidth,320), H=360, L=52, R=78, B=64, T=34, sh=k2=>!OCH.has(k2), now=Date.now();
+    const raw=Math.max(1,...ms.map(m=>Math.max(sh('out')||sh('os')?m.order:0,sh('prod')?Math.max(m.prod,m.act):0,sh('cap')?m.cap:0))), st=niceStep(raw/5), max=Math.ceil(raw*1.08/st)*st;
+    const n=ms.length, slot=(W-L-R)/n, bw=Math.min(22,slot*.2), y=v=>H-B-(v/max)*(H-B-T), cxs=ms.map((m,i)=>L+slot*i+slot/2);
+    const fmt=v=>v>=1e6?nf1.format(v/1e6)+' jt':v>=1e3?nf.format(Math.round(v/1e3))+' rb':nf.format(Math.round(v));
+    const ci=ms.findIndex(m=>m.cur), lastClosed=ms.reduce((a,m,i)=>i<ci&&m.npo&&m.nclosed===m.npo?i:a,-1);
+    let sv=`<svg width="${W}" height="${H}" role="img" aria-label="Order vs kapasitas per bulan"><defs><linearGradient id="ocBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent-soft)" stop-opacity=".9"/><stop offset="1" stop-color="var(--accent-soft)" stop-opacity=".25"/></linearGradient></defs>`;
+    if(lastClosed>=0){ sv+=`<rect x="${L}" y="${T-24}" width="${slot*(lastClosed+1)}" height="${H-B-T+24}" fill="url(#ocBg)" rx="8"/><text class="oc-tag-s" x="${L+10}" y="${T-8}">BULAN CLOSED</text>`; }
+    sv+=llAxis(W-R+8,H,L,B,T,max,fmt)+`<text class="ll-ax" transform="rotate(-90)" x="${-(T+(H-B-T)/2)}" y="14" text-anchor="middle">pack</text>`;
+    if(ci>=0){ const x0=L+slot*ci; sv+=`<rect x="${x0+2}" y="${T-24}" width="${slot-4}" height="${H-B-T+24}" fill="var(--accent-soft)" opacity=".85" rx="6"/>`; }
+    ms.forEach((m,i)=>{ const cx=cxs[i];
+      if(sh('cap')&&m.cap){ const w=Math.min(slot*.72,bw*3.2), h=(H-B)-y(m.cap); sv+=`<rect x="${cx-w/2}" y="${y(m.cap)}" width="${w}" height="${h}" rx="5" fill="var(--surface-2)" fill-opacity=".9" stroke="var(--ink-3)" stroke-opacity=".85" stroke-width="1.3"/>`;
+        if(m.load!=null&&m.prod>0) sv+=`<g><rect x="${cx-24}" y="${y(m.cap)-20}" width="48" height="16" rx="8" fill="${m.load>1?'var(--late-soft)':'var(--warn-soft)'}" stroke="${m.load>1?'var(--late)':'var(--warn)'}" stroke-width=".8"/><text class="oc-pill ${m.load>1?'r':''}" x="${cx}" y="${y(m.cap)-8.5}" text-anchor="middle">${Math.round(m.load*100)}% kap</text></g>`; }
+      if((sh('out')||sh('os'))&&m.order){ const h=(H-B)-y(m.order); sv+=`<rect x="${cx-bw-1.5}" y="${y(m.order)}" width="${bw}" height="${h}" rx="3" fill="var(--oc-ord)"/>`; }
+      if(sh('out')&&m.out){ const h=(H-B)-y(m.out); sv+=`<rect x="${cx+1.5}" y="${y(m.out)}" width="${bw}" height="${h}" rx="3" fill="var(--oc-out)"/>`; }
+      sv+=`<text class="ll-ax ${m.cur?'oc-cur':''}" x="${cx}" y="${H-B+16}" text-anchor="middle">${mLbl(m.t)}</text>`;
+      if(m.npo){ const done=m.nclosed===m.npo; sv+=`<text class="oc-po" x="${cx}" y="${H-B+33}" text-anchor="middle">${m.nclosed}/${m.npo} PO</text><g><rect x="${cx-30}" y="${H-B+40}" width="60" height="16" rx="8" fill="${done?'var(--ok-soft)':'var(--warn-soft)'}"/><text class="oc-chip ${done?'g':'w'}" x="${cx}" y="${H-B+51.5}" text-anchor="middle">${done?'✓ closed':'sisa '+fmt(m.os)}</text></g>`; } });
+    // garis produksi: aktual (padat) s.d. bulan ini, rencana (putus-putus) mulai bulan ini
+    const smooth=pts=>pts.map((p,i)=>{ if(!i) return `M${p[0]},${p[1]}`; const a=pts[i-1], b2=pts[i], dx=(b2[0]-a[0])/2.2; return `C${a[0]+dx},${a[1]} ${b2[0]-dx},${b2[1]} ${b2[0]},${b2[1]}`; }).join(' ');
+    if(sh('prod')){ const ce=ci<0?n-1:ci;
+      const actPts=ms.slice(0,ce+1).map((m,i)=>[cxs[i],y(m.act)]), planPts=ms.slice(ce).map((m,k)=>[cxs[ce+k],y(m.prod)]);
+      if(actPts.length>1) sv+=`<path d="${smooth(actPts)}" fill="none" stroke="var(--oc-plan)" stroke-width="2.6"/>`;
+      if(planPts.length>1||ce<n) sv+=`<path d="${smooth([[cxs[ce],y(ms[ce].act)]].concat(planPts))}" fill="none" stroke="var(--oc-plan)" stroke-width="2" stroke-dasharray="6 5"/>`;
+      ms.forEach((m,i)=>{ if(i<ce) sv+=`<circle cx="${cxs[i]}" cy="${y(m.act)}" r="4" fill="var(--oc-plan)"/>`; if(i>=ce) sv+=`<circle cx="${cxs[i]}" cy="${y(m.prod)}" r="4" fill="var(--surface)" stroke="var(--oc-plan)" stroke-width="2"/>`; });
+      if(ci>=0){ const m=ms[ci]; sv+=`<rect x="${cxs[ci]-5}" y="${y(m.act)-5}" width="10" height="10" transform="rotate(45 ${cxs[ci]} ${y(m.act)})" fill="var(--surface)" stroke="var(--late)" stroke-width="2.2"/>`; }
+      const lm=ms[n-1]; sv+=`<text class="oc-end" x="${W-R+12}" y="${y(lm.prod)-4}">Plan</text><text class="oc-endv" x="${W-R+12}" y="${y(lm.prod)+12}">${fmt(lm.prod)}</text>`;
+      if(ci>=0) sv+=`<text class="oc-end r" x="${W-R+12}" y="${y(ms[ci].act)+22}">Actual</text><text class="oc-endv" x="${W-R+12}" y="${y(ms[ci].act)+38}">${fmt(ms[ci].act)}</text>`; }
+    if(ci>=0){ const cx=cxs[ci], d=new Date(now), lab='HARI INI · '+d.getDate()+' '+BLN[d.getMonth()].toUpperCase(); sv+=`<line x1="${cx}" x2="${cx}" y1="${T-6}" y2="${H-B}" stroke="var(--warn)" stroke-width="1.4" stroke-dasharray="2 4"/><rect x="${cx-48}" y="${T-30}" width="96" height="18" rx="9" fill="var(--warn)"/><text class="oc-today" x="${cx}" y="${T-17.5}" text-anchor="middle">${lab}</text>`; }
+    const pk=ms.reduce((a,m)=>m.order>a.order?m:a,ms[0]); if(pk.order&&(sh('out')||sh('os'))){ const px=cxs[ms.indexOf(pk)], lab='Puncak order '+fmt(pk.order), w=lab.length*6.3+18; sv+=`<rect x="${px-w/2}" y="${y(pk.order)-34}" width="${w}" height="20" rx="10" fill="var(--ink)"/><text class="oc-peak" x="${px}" y="${y(pk.order)-20}" text-anchor="middle">${lab}</text>`; }
+    ms.forEach((m,i)=>{ sv+=`<rect class="oc-hit" data-i="${i}" x="${L+slot*i}" y="${T}" width="${slot}" height="${H-B-T}" fill="transparent"/>`; });
     el.innerHTML=sv+'</svg>';
-    el.querySelectorAll('.oc-hit').forEach(r=>{ const m=ms[+r.dataset.i]; const f=e=>llTip(e,`<b>${mLbl(m.t)}</b><br>Order SW ${nf.format(m.order)} pack<br>· sudah output ${nf.format(m.out)} · outstanding ${nf.format(m.os)}<br>Produksi ${nf.format(Math.round(m.prod))} pack (aktual ${nf.format(m.act)} + rencana ${nf.format(Math.round(m.plan))})<br>Kapasitas ${m.cap?nf.format(Math.round(m.cap))+' pack':'–'}${m.load!=null?'<br>Loading '+Math.round(m.load*100)+'%':''}`); r.onmousemove=f; r.onclick=f; r.onmouseleave=()=>$('tip').hidden=true; }); }
+    el.querySelectorAll('.oc-hit').forEach(r=>{ const m=ms[+r.dataset.i]; const f=e=>llTip(e,`<b>${mLbl(m.t)}</b> · ${m.nclosed||0}/${m.npo||0} PO closed<br>Order SW ${nf.format(m.order)} pack<br>· sudah output ${nf.format(m.out)} · sisa ${nf.format(m.os)}<br>Produksi aktual ${nf.format(m.act)} pack${m.plan?' + rencana '+nf.format(Math.round(m.plan)):''}<br>Kapasitas ${m.cap?nf.format(Math.round(m.cap))+' pack':'–'}${m.load!=null&&m.prod>0?' · loading '+Math.round(m.load*100)+'%':''}`); r.onmousemove=f; r.onclick=f; r.onmouseleave=()=>$('tip').hidden=true; }); }
   // akumulasi
   { const el2=$('ocCum'), W=Math.max(el2.clientWidth,300), H=270, L=56, B=30, T=24, sh=k2=>!OCH.has(k2);
     const raw=Math.max(1,...ms.map(m=>Math.max(sh('co')?m.co:0,sh('cpl')?m.cp:0,sh('ccap')?m.cc:0))), st=niceStep(raw/4), max=Math.ceil(raw/st)*st;
