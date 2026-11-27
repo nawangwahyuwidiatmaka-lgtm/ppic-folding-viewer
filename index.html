@@ -621,6 +621,29 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
 .kd-nc input{width:auto!important;margin:0}
 #kdEdEta:disabled{opacity:.45}
 #kdEd .le-g{align-items:start}
+/* panel parameter bisa ditutup */
+.rail-head{position:relative}
+.rail-x{flex:none;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);display:grid;place-items:center;cursor:pointer;padding:0;margin-left:4px}
+.rail-x:hover{border-color:var(--accent);color:var(--accent)}
+.rail-x svg,.rail-open svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.rail-open{display:none}
+body.rail-off .layout{grid-template-columns:minmax(0,1fr)}
+body.rail-off aside.rail{display:none}
+body.rail-off .rail-open{display:flex;position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:25;flex-direction:column;align-items:center;gap:8px;padding:12px 6px;border:1px solid var(--accent);border-left:0;border-radius:0 10px 10px 0;background:var(--accent);color:#fff;cursor:pointer;box-shadow:var(--sh2)}
+body.rail-off .rail-open span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+body.rail-off .rail-open:hover{padding-left:9px}
+.rail-x:focus-visible,.rail-open:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:1000px){body.rail-off .rail-open{top:auto;bottom:16px;transform:none;flex-direction:row;border-radius:0 999px 999px 0;padding:8px 14px 8px 8px}body.rail-off .rail-open span{writing-mode:horizontal-tb;transform:none}}
+@media print{.rail-open{display:none!important}}
+#kdTbl{table-layout:auto;width:100%}
+#kdTbl th,#kdTbl td{white-space:normal;font-size:12.5px;padding-left:8px;padding-right:8px}
+#kdTbl td.num,#kdTbl td.r{white-space:nowrap}
+#kdTbl td .c{word-break:break-word}
+#ruleTbl th,#ruleTbl td{white-space:normal}
+#ruleTbl{table-layout:fixed;width:100%;min-width:0}
+#ruleTbl input:not([type=checkbox]),#ruleTbl select{width:100%!important;min-width:0;box-sizing:border-box;padding-left:6px;padding-right:4px}
+#ruleTbl th{font-size:10px;padding-left:4px;padding-right:4px}#ruleTbl td{padding-left:3px;padding-right:3px}
+#ruleTbl th:nth-child(1){width:30px}#ruleTbl th:nth-child(2){width:44px}#ruleTbl th:nth-child(3){width:15%}#ruleTbl th:nth-child(5){width:10%}#ruleTbl th:nth-child(14){width:52px}#ruleTbl th:nth-child(15){width:40px}
 
 </style>
 </head>
@@ -650,8 +673,9 @@ table[id] thead th.s-desc::after{content:" ▼";font-size:9px;color:var(--accent
 
   <div id="banner"></div>
   <div class="layout">
+    <button type="button" class="rail-open" id="railO" aria-label="Buka panel parameter simulasi" title="Buka parameter simulasi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><span>Parameter</span></button>
     <aside class="rail" aria-label="Parameter simulasi">
-      <div class="rail-head"><h2>Parameter simulasi</h2><span class="xl" id="chgCount">Sesuai Sheet</span></div>
+      <div class="rail-head"><h2>Parameter simulasi</h2><span class="xl" id="chgCount">Sesuai Sheet</span><button type="button" class="rail-x" id="railX" aria-label="Tutup panel parameter" title="Tutup panel (tampilan lebih lebar)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button></div>
       <div id="controls"></div>
       <div class="rail-foot">
         <p class="note">Simulasi tidak mengubah Sheet. Tekan Simpan untuk menerapkan parameter, aturan, dan antrean ke Google Sheet.</p>
@@ -1132,7 +1156,7 @@ function renderKendala(){ if(!D||!SIM) return; const ed=canEditUI();
       <td><span class="num">${x.rows.length} PO</span><div class="c">${esc(x.cust)} · ${esc(x.rows.map(r=>r.po).slice(0,3).join(', '))}${x.rows.length>3?' …':''}</div></td>
       <td class="num">${x.sw?fD(x.sw):'–'}</td><td class="r num">${nf.format(x.sisa)}</td><td class="r num">${fRp(x.nilai)}</td>
       <td class="num" style="font-size:12px">${x.start?fDT(x.start):'–'}${x.schedEarly?'<div class="kd-w">sebelum ETA supply</div>':''}</td>
-      <td style="white-space:normal;min-width:220px">${x.k?`<b class="kd-kat">${esc(x.k.kat||'–')}</b><div class="c">${esc(x.k.ket||'')}</div>${x.k.pic?`<div class="c">PIC: ${esc(x.k.pic)}</div>`:''}`:'<span class="mini">–</span>'}</td>
+      <td style="white-space:normal">${x.k?`<b class="kd-kat">${esc(x.k.kat||'–')}</b><div class="c">${esc(x.k.ket||'')}</div>${x.k.pic?`<div class="c">PIC: ${esc(x.k.pic)}</div>`:''}`:'<span class="mini">–</span>'}</td>
       <td class="num">${x.nc?'<span class="pill late">Belum ada komitmen</span>':x.eta?fD(x.eta):'–'}</td><td class="r num ${x.etaGap!=null&&x.etaGap<0?'neg':''}">${x.etaGap==null?'–':(x.etaGap>0?'+':'')+nf1.format(x.etaGap)}</td>
       <td>${stp(x)}${x.k&&x.k.at?`<div class="c">${fDT(parseDT(x.k.at))}</div>`:''}</td>${ed?`<td><button type="button" class="btn sm" data-kded="${esc(x.item)}">${x.k?'Ubah':'Isi'}</button></td>`:''}</tr>`).join('')||`<tr><td colspan="12" class="empty">Tidak ada item yang cocok.</td></tr>`)+'</tbody>';
   $('kdTbl').querySelectorAll('[data-kded]').forEach(b=>b.onclick=()=>kdOpen([b.dataset.kded]));
@@ -1974,6 +1998,7 @@ function setData(d){
 const withMaster=s=>Object.assign({},s,{masterMap:D.masterMap});
 const canEditUI=()=>(ROLE==='owner'||ROLE==='editor')&&!!D;
 function applyRole(){
+  if(RAIL_PREF==null) setRail(!canEditUI(),false);
   const ed=canEditUI();
   CAN_EDIT=ed;
   document.body.classList.toggle('ro',!ed);
@@ -2263,6 +2288,13 @@ async function xlsxRead(buf){
     out.SheetNames.push(name); out.rows[name]=rows; }
   return out;
 }
+
+/* ======================= PANEL PARAMETER BISA DITUTUP ======================= */
+let RAIL_PREF=null; try{ RAIL_PREF=localStorage.getItem('pcbf_rail'); }catch(e){}
+function setRail(off,save){ document.body.classList.toggle('rail-off',off); $('railO').setAttribute('aria-expanded',String(!off)); if(save){ RAIL_PREF=off?'off':'on'; try{ localStorage.setItem('pcbf_rail',RAIL_PREF); }catch(e){} } window.dispatchEvent(new Event('resize')); }
+$('railX').onclick=()=>{ setRail(true,true); $('railO').focus(); };
+$('railO').onclick=()=>{ setRail(false,true); $('railX').focus(); };
+if(RAIL_PREF==='off') setRail(true,false);
 
 /* ======================= PENCARIAN GLOBAL ======================= */
 (function(){ const inp=$('gsQ'), box=$('gsList'); let res=[], sel=-1;
